@@ -2,7 +2,35 @@
 
 ## Library import ##
 from librosa.effects import pitch_shift
-from numpy.random import choice
+from numpy import random
+
+
+def add_white_noise(audio_clip, noise_ratio=.1, random_state=None):
+    """
+    Add white noise to an audio signal, scaling by a noise ratio.
+    
+    Parameters:
+        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create().
+        noise_ratio: Floating point to use for scaling the white noise. Higher values will increasingly 
+            overwhelm the original signal.
+        random_state: Integer seed to use for reproducibility.
+            
+    Returns:
+        An augmented numpy.ndarray, with white noise added according to the noise ratio.
+        
+    Example usage:
+        wn_clip = add_white_noise(clip, .05)
+        audio_df['wn_audio'] = df.audio_wav.progress_apply(lambda x: add_white_noise(x, noise_ratio=0.5))
+    """
+    if len(audio_clip) == 0:
+        return audio_clip # Handle case where empty list (no audio) is supplied
+    
+    if random_state is not None:
+        random.seed(seed=random_state)
+    
+    wn = random.normal(loc=0, scale=audio_clip.std(), size=audio_clip.shape[0])
+    return audio_clip + wn * noise_ratio
+
 
 def augment_pitch(audio_clip, sample_rate=22050, n_steps=3, step_var=None, bins_per_octave=24,
                   res_type='kaiser_best'):
@@ -28,6 +56,6 @@ def augment_pitch(audio_clip, sample_rate=22050, n_steps=3, step_var=None, bins_
         return audio_clip # Handle case where empty list (no audio) is supplied
     
     if step_var is not None:
-        n_steps += choice(step_var)
+        n_steps += random.choice(step_var)
     
     return pitch_shift(audio_clip, sr=sample_rate, n_steps=n_steps, bins_per_octave=bins_per_octave, res_type=res_type)
