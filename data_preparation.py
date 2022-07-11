@@ -171,7 +171,7 @@ class data_preparation():
     
 
         
-    def create(self, padding_=0.02, train=0.6, val=0.2, test=0.2, random_state=42):
+    def create_audio_set(self, padding_=0.02, train=0.6, val=0.2, test=0.2, random_state=42):
         """
         main function to create training/test/eval dataset from dataset
         
