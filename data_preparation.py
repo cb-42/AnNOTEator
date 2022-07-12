@@ -94,12 +94,12 @@ class data_preparation():
             elif (msg.type=='note_on' and msg.velocity==0) or msg.type=='note_off':
                 end=self.time_log
                 if type(temp_dict[msg.note])==list:
-                    notes_collection.append([msg.note, round(temp_dict[msg.note][0],2), round(end,2)])
+                    notes_collection.append([msg.note, math.floor(temp_dict[msg.note][0]*100)/100, math.ceil(end*100)/100])
                     del temp_dict[msg.note][0]
                     if len(temp_dict[msg.note])==0:
                         del temp_dict[msg.note]
                 else:
-                    notes_collection.append([msg.note, round(temp_dict[msg.note],2), round(end,2)])
+                    notes_collection.append([msg.note, math.floor(temp_dict[msg.note]*100)/100, math.ceil(end*100)/100])
                     del temp_dict[msg.note]
 
             else:
@@ -190,11 +190,17 @@ class data_preparation():
             start=max(librosa.time_to_samples(x['start'], sr=sr)-padding, 0)
             end=min(librosa.time_to_samples(x['end'], sr=sr)+padding, len(wav))
             return wav[start:end]
-        def resampling(x, max_length):
-            org_sr=x['sampling_rate']
-            tar_sr_ratio=max_length/len(x['audio_wav'])
-            return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
 
+        def resampling(x, target_length):
+            org_sr=x['sampling_rate']
+            tar_sr_ratio=target_length/len(x['audio_wav'])
+            return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
+        
+        def check_length(x, target_length):
+            if len(x)>target_length:
+                return x[:target_length]
+            elif len(x)<target_length:
+                return np.pad(x, (0, target_length-len(x)), 'constant')
 
         print('Generating Dataset')
         for key, row in tqdm(self.midi_wav_map.iterrows(), total=self.midi_wav_map.shape[0]):
@@ -212,9 +218,10 @@ class data_preparation():
                        
         self.notes_collection=pd.concat(df_list, ignore_index=True)
         self.notes_collection=self.notes_collection[self.notes_collection['audio_wav'].apply(lambda x:len(x))!=0]
-        max_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).max()
+        target_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).mode()[0]
         print('Resampling Audio Data to align data shape')
-        self.notes_collection[['audio_wav_resample', 'resample_sr']]=self.notes_collection.progress_apply(lambda x:resampling(x, max_length), axis=1)
+        self.notes_collection[['audio_wav_resample', 'resample_sr']]=self.notes_collection.progress_apply(lambda x:resampling(x, target_length) if len(x['audio_wav'])!=target_length else (x['audio_wav'], x['sampling_rate']), axis=1)
+        self.notes_collection['audio_wav_resample']=self.notes_collection.audio_wav_resample.apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
 
         self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
                                          [int(train*len(self.notes_collection)),
