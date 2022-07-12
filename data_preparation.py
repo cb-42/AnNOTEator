@@ -196,7 +196,7 @@ class data_preparation():
             return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
 
 
-            
+        print('Generating Dataset')
         for key, row in tqdm(self.midi_wav_map.iterrows(), total=self.midi_wav_map.shape[0]):
             if row['midi_filename']=='drummer1/session1/78_jazz-fast_290_beat_4-4.mid':
                 continue
@@ -213,6 +213,7 @@ class data_preparation():
         self.notes_collection=pd.concat(df_list, ignore_index=True)
         self.notes_collection=self.notes_collection[self.notes_collection['audio_wav'].apply(lambda x:len(x))!=0]
         max_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).max()
+        print('Resampling Audio Data to align data shape')
         self.notes_collection[['audio_wav_resample', 'resample_sr']]=self.notes_collection.progress_apply(lambda x:resampling(x, max_length), axis=1)
 
         self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
