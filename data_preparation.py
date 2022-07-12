@@ -5,10 +5,10 @@ import librosa
 import librosa.display
 import pandas as pd
 import os
-from tqdm.notebook import trange, tqdm
+from tqdm.notebook import tqdm
 import numpy as np
 import itertools
-tqdm.pandas()
+
 
 
 class data_preparation():
@@ -180,6 +180,7 @@ class data_preparation():
         :param train, val, test: the train/val/test ratio
         :param random_state: random_state, default 42
         """
+        tqdm.pandas()
         df_list=[]
         
         if train+val+test!=1: raise ValueError('the total of train, val, test should euqal to 100%') 
