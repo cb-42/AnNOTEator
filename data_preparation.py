@@ -1,6 +1,5 @@
 import mido
 from mido import MidiFile, Message, MidiTrack, MetaMessage
-from IPython.display import Audio
 import librosa
 import librosa.display
 import pandas as pd
@@ -8,6 +7,7 @@ import os
 from tqdm.notebook import tqdm
 import numpy as np
 import itertools
+import math
 
 
 
