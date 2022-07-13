@@ -1,7 +1,9 @@
 ## This script contains functions to facilitate audio data augmentation for The AnNOTEators Project ##
 
 ## Library import ##
+import librosa.display
 from librosa.effects import pitch_shift
+import matplotlib.pyplot as plt
 from numpy import random
 
 
@@ -59,3 +61,47 @@ def augment_pitch(audio_clip, sample_rate=22050, n_steps=3, step_var=None, bins_
         n_steps += random.choice(step_var)
     
     return pitch_shift(audio_clip, sr=sample_rate, n_steps=n_steps, bins_per_octave=bins_per_octave, res_type=res_type)
+
+
+def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(16,12)):
+    """
+    Visually compare various augmentations of the same signal (or other signals after resampling) using
+    librosa.display.waveform.
+    
+    Parameters:
+        df: Dataframe to use to retrieve signal columns.
+        i: Index of audio clip to plot.
+        signal_cols: List of column names to retrieve signals from. The order should match labels in signal_list. These are assumed
+            to be in numpy array format, resulting from librosa processing. Current code expects any white noise signal listed first,
+            so other signals can be viewed more readily.
+        signal_labs: A list of strings, which are brief descriptors to use as labels for each signal.
+        alpha: Alpha setting to use for white noise signal, which can improve visibility of other signals. This can supplied
+            as a list, with a separate value for each signal. Otherwise, the same alpha value will be used for all signals.
+        figsize: Figure size tuple to pass to plt.figure.
+        
+        
+    Example usage:
+        compare_waveforms(df=sub_df, i=0, signal_cols=['wn_audio', 'audio_wav', 'augmented_pitch'],
+                signal_labs=['white noise', 'original', 'pitch shift'], alpha=[0.3, 0.7, 0.7])
+        
+    """
+    if signal_labs is None:
+        signal_labs = signal_cols
+    elif (len(signal_labs) < len(signal_cols)) | (type(signal_labs)!=list):
+        print('Not enough labels were provided in list form. Using column names as labels.')
+        signal_labs = signal_cols
+        
+    if type(alpha)==float:
+        alpha = [alpha for s in signal_cols]
+    elif len(alpha) < len(signal_cols):
+        print('Alpha list contained insufficient values, using first value for all signals.')
+        alpha = [alpha[0] for s in signal_cols]
+    
+    plt.figure(figsize=figsize)
+    
+    for col, lab, alp in list(zip(signal_cols, signal_labs, alpha)): # plot white noise first so other signals are overlaid
+        librosa.display.waveplot(df.loc[i, col], label=lab, alpha=alp) 
+    
+    plt.legend(signal_labs)    
+    plt.title('Comparison of audio clips for element {}'.format(i))
+    
