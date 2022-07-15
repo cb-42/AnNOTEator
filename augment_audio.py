@@ -18,7 +18,10 @@ def add_pedalboard_effects(audio_clip, sample_rate=22050, pb=None, room_size=0.6
             is passed, then one will be created using Reverb and LowpassFilter effects.
         room_size: Float to be passed to Reverb effect used to simulate the room space.
         cutoff_freq: Value to use as the lowpass filter frequency cutoff.
-    
+        
+    Returns:
+        An augmented numpy.ndarray, with Pedalboard effects applied.
+        
     Example usage:
         rev_clip = add_pedalboard_effects(clip, sample_rate, room_size=0.7)
         audio_df['pb_aug_audio'] = audio_df.audio_wav.progress_apply(lambda x: add_pedalboard_effects(x, sample_rate))
