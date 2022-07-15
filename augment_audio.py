@@ -1,10 +1,32 @@
 ## This script contains functions to facilitate audio data augmentation for The AnNOTEators Project ##
 
-## Library import ##
 import librosa.display
 from librosa.effects import pitch_shift
 import matplotlib.pyplot as plt
 from numpy import random
+from pedalboard import LowpassFilter, Pedalboard, Reverb
+
+
+def add_pedalboard_effects(audio_clip, sample_rate=22050, pb=None, room_size=0.6, cutoff_freq=1000):
+    """
+    Add pedalboard effects to an audio file.
+    
+    Parameters:
+        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create().
+        sample_rate: This number specifies the audio sampling rate.
+        pb: pedalboard.Pedalboard initialized with reverb, lowpass filter, and/or other effects. If no Pedalboard object
+            is passed, then one will be created using Reverb and LowpassFilter effects.
+        room_size: Float to be passed to Reverb effect used to simulate the room space.
+        cutoff_freq: Value to use as the lowpass filter frequency cutoff.
+    
+    Example usage:
+        rev_clip = add_pedalboard_effects(clip, sample_rate, room_size=0.7)
+        audio_df['pb_aug_audio'] = audio_df.audio_wav.progress_apply(lambda x: add_pedalboard_effects(x, sample_rate))
+    """
+    if pb is None:
+        pb = Pedalboard([Reverb(room_size), LowpassFilter(cutoff_frequency_hz=cutoff_freq)])
+    
+    return pb(audio_clip, sample_rate)
 
 
 def add_white_noise(audio_clip, noise_ratio=.1, random_state=None):
@@ -79,7 +101,6 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(
             as a list, with a separate value for each signal. Otherwise, the same alpha value will be used for all signals.
         figsize: Figure size tuple to pass to plt.figure.
         
-        
     Example usage:
         compare_waveforms(df=sub_df, i=0, signal_cols=['wn_audio', 'audio_wav', 'augmented_pitch'],
                 signal_labs=['white noise', 'original', 'pitch shift'], alpha=[0.3, 0.7, 0.7])
@@ -87,11 +108,11 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(
     """
     if signal_labs is None:
         signal_labs = signal_cols
-    elif (len(signal_labs) < len(signal_cols)) | (type(signal_labs)!=list):
+    elif (len(signal_labs) < len(signal_cols)) | (type(signal_labs) != list):
         print('Not enough labels were provided in list form. Using column names as labels.')
         signal_labs = signal_cols
         
-    if type(alpha)==float:
+    if type(alpha) == float:
         alpha = [alpha for s in signal_cols]
     elif len(alpha) < len(signal_cols):
         print('Alpha list contained insufficient values, using first value for all signals.')
