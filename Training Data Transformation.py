@@ -108,3 +108,7 @@ y = np.array(label)
 x_train, x_test, y_train, y_test = train_test_split(X1, y, test_size=0.2, random_state=42)
 
 x_train.shape, y_train.shape
+
+
+# can use np.save('gmd_stft.npy', X1) to save the ndarray data as npy files
+# use np.load(filename) to load whenever we need it
