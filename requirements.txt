@@ -1,0 +1,11 @@
+itertools
+librosa
+math
+matplotlib
+mido
+numpy
+os
+pandas
+pedalboard
+sklearn
+tqdm
