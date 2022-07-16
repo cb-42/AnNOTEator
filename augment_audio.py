@@ -127,5 +127,4 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(
         librosa.display.waveplot(df.loc[i, col], label=lab, alpha=alp) 
     
     plt.legend(signal_labs)    
-    plt.title('Comparison of audio clips for element {}'.format(i))
-    
+    plt.title('Comparison of audio clips for element: {}, label: {}'.format(i, df.loc[i, 'label']))
