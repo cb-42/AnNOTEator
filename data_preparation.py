@@ -12,6 +12,9 @@ import math
 
 
 class data_preparation():
+
+
+
     """
     This is a class for creating training dataset for model training.
     
@@ -171,7 +174,7 @@ class data_preparation():
     
 
         
-    def create_audio_set(self, padding_=0.02, train=0.6, val=0.2, test=0.2, random_state=42):
+    def create_audio_set(self, padding_=0.02, train=0.6, val=0.2, test=0.2, random_state=42, fix_length=0):
         """
         main function to create training/test/eval dataset from dataset
         
@@ -179,23 +182,27 @@ class data_preparation():
                          The padding actually increas the window length when doing the slicing instead of adding white space before and after.
         :param train, val, test: the train/val/test ratio
         :param random_state: random_state, default 42
+        :param fix_length: setting this length to int >0 will force the sound clip to have exact same length. suggest value is 4000
         """
         tqdm.pandas()
         df_list=[]
         
         if train+val+test!=1: raise ValueError('the total of train, val, test should euqal to 100%') 
         
-        def audio_slicing(x, wav, sr, padding_):
+        def audio_slicing(x, wav, sr, padding_, window_size=None):
             padding=librosa.time_to_samples(padding_, sr=sr)
-            start=max(librosa.time_to_samples(x['start'], sr=sr)-padding, 0)
-            end=min(librosa.time_to_samples(x['end'], sr=sr)+padding, len(wav))
+            start=max(librosa.time_to_samples(x['start']-padding, sr=sr),0)
+            if window_size:
+                return wav[start:start+window_size]
+            else:
+                end=min(librosa.time_to_samples(x['end'], sr=sr)+padding, len(wav))
             return wav[start:end]
 
         def resampling(x, target_length):
             org_sr=x['sampling_rate']
             tar_sr_ratio=target_length/len(x['audio_wav'])
             return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
-        
+
         def check_length(x, target_length):
             if len(x)>target_length:
                 return x[:target_length]
@@ -211,17 +218,23 @@ class data_preparation():
             track_notes=self.merge_note_label(row['track_id'], converted_notes_collection)
             
         
-            wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']))
-            track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_), axis=1)
-            track_notes['sampling_rate']=sr
+            wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']), sr=None, mono=True)
+            if fix_length>0:
+                track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_, window_size=fix_length), axis=1)
+            else:
+                track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_), axis=1)
+                track_notes['sampling_rate']=sr
             df_list.append(track_notes)
                        
         self.notes_collection=pd.concat(df_list, ignore_index=True)
         self.notes_collection=self.notes_collection[self.notes_collection['audio_wav'].apply(lambda x:len(x))!=0]
-        target_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).mode()[0]
-        print('Resampling Audio Data to align data shape')
-        self.notes_collection[['audio_wav_resample', 'resample_sr']]=self.notes_collection.progress_apply(lambda x:resampling(x, target_length) if len(x['audio_wav'])!=target_length else (x['audio_wav'], x['sampling_rate']), axis=1)
-        self.notes_collection['audio_wav_resample']=self.notes_collection.audio_wav_resample.apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
+        if fix_length>0:
+            pass
+        else:
+            print('Resampling Audio Data to align data shape')
+            target_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).mode()[0]
+            self.notes_collection[['audio_wav_resample', 'resample_sr']]=self.notes_collection.progress_apply(lambda x:resampling(x, target_length), axis=1)
+            self.notes_collection['audio_wav_resample']=self.notes_collection.audio_wav_resample.progress_apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
 
         self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
                                          [int(train*len(self.notes_collection)),
