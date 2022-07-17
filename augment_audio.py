@@ -2,6 +2,7 @@
 
 import librosa.display
 from librosa.effects import pitch_shift
+from math import sqrt
 import matplotlib.pyplot as plt
 from numpy import random
 from pedalboard import LowpassFilter, Pedalboard, Reverb
@@ -73,7 +74,7 @@ def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **au
         
     Example usage:
         aug_params = {
-            'add_white_noise': {'noise_ratio':0.1},
+            'add_white_noise': {'noise_ratio':0.1, 'random_state': random_state},
             'augment_pitch': {'n_steps':2, 'step_var':range(-1, 2, 1)},
             'add_pedalboard_effects': {}
             }
@@ -118,10 +119,10 @@ def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_
     return pitch_shift(audio_clip, sr=sample_rate, n_steps=n_steps, bins_per_octave=bins_per_octave, res_type=res_type)
 
 
-def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(16,12), leg_loc='best'):
+def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, max_pts=None, alpha=0.5, fontsizes=[24, 18, 20], figsize=(16, 12), leg_loc='best'):
     """
-    Visually compare various augmentations of the same signal (or other signals after resampling) using
-    librosa.display.waveform.
+    Visually compare the effect of various augmentations on the same signal's amplitude envelope (or other signals 
+        after resampling) using librosa.display.waveplot.
     
     Parameters:
         df: Dataframe to use to retrieve signal columns.
@@ -130,9 +131,13 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(
             to be in numpy array format, resulting from librosa processing. Current code expects any white noise signal listed first,
             so other signals can be viewed more readily.
         signal_labs: A list of strings, which are brief descriptors to use as labels for each signal.
+        sample_rate: Sampling rate to be passed to librosa.display.waveplot. Note that we are expecting to use
+            44100 as a default, rather than the 22050 default set by waveplot.
+        max_pts: Positive integer to pass to waveplot for limiting points to be drawn, which can result in downsampling. For our purposes in working with short clips, we set the default to None to avoid downsampling.
         alpha: Alpha setting to use for white noise signal, which can improve visibility of other signals. This can supplied
             as a list, with a separate value for each signal. Otherwise, the same alpha value will be used for all signals.
-        figsize: Figure size tuple to pass to plt.figure.
+        fontsizes: List of font sizes to use for plot title and/or other labels.
+        figsize: Figure size tuple to pass to plt.figure, corresponding to titles, axis labels, and legend labels.
         leg_loc: String to pass to plt.legend to control legend positioning.
         
     Example usage:
@@ -154,7 +159,8 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(
     plt.figure(figsize=figsize)
     
     for col, lab, alp in list(zip(signal_cols, signal_labs, alpha)):
-        librosa.display.waveplot(df.loc[i, col], label=lab, alpha=alp) 
+        librosa.display.waveplot(df.loc[i, col], sr=sample_rate, max_points=max_pts, label=lab, alpha=alp) 
     
-    plt.legend(signal_labs, loc=leg_loc)    
-    plt.title('Comparison of audio clips for element: {}, label: {}'.format(i, df.loc[i, 'label']))
+    plt.title('Comparison of audio clips for element: {}, label: {}'.format(i, df.loc[i, 'label']), fontsize=fontsizes[0])
+    plt.gca().xaxis.label.set_size(fontsizes[1])
+    plt.legend(signal_labs, loc=leg_loc, fontsize=fontsizes[2])    
