@@ -38,12 +38,13 @@ class data_preparation():
             self.dataset_type=dataset
             csv_path=[f for f in os.listdir(directory_path) if '.csv' in f][0]
             self.dataset=pd.read_csv(os.path.join(directory_path, csv_path)).dropna().sample(frac=sample_ratio).reset_index()
-            self.midi_wav_map=self.dataset[['index', 'midi_filename', 'audio_filename', 'duration']]
-            self.midi_wav_map.columns=['track_id', 'midi_filename', 'audio_filename', 'duration']
+            df=self.dataset[['index', 'midi_filename', 'audio_filename', 'duration']].copy()
+            df.columns=['track_id', 'midi_filename', 'audio_filename', 'duration']
             print(f'Filtering out the midi/audio pair that has a duration difference > {diff_threshold} second')
-            self.midi_wav_map['wav_length']=self.midi_wav_map['audio_filename'].progress_apply(lambda x:self.get_length(x))
-            self.midi_wav_map['diff']=np.abs(self.midi_wav_map['duration']-self.midi_wav_map['wav_length'])
-            self.midi_wav_map=self.midi_wav_map[self.midi_wav_map['diff'].le(diff_threshold)]
+            df['wav_length']=df['audio_filename'].progress_apply(lambda x:self.get_length(x))
+            df['diff']=np.abs(df['duration']-df['wav_length'])
+            df=df[df['diff'].le(diff_threshold)]
+            self.midi_wav_map=df.copy()
             self.notes_collection=pd.DataFrame()
             # the midi note mapping is copied from the Google project page. note 39,54,56 are new in 
             # EGMD dataset and Google never assigned it to a code. From initial listening test, these
@@ -172,7 +173,9 @@ class data_preparation():
         :return: a list of 3-element lists with start and end time rounded to 2 decimal places in seconds
         """
         if type(self.time_log)==float:
-            return notes_collection
+            return [[note[0],
+                     round(note[1],2),
+                     round(note[2],2) ] for note in notes_collection]
         else:
             ticks_per_beat, tempo=self.time_meta_extraction()
 
@@ -199,7 +202,7 @@ class data_preparation():
         
         def audio_slicing(x, wav, sr, padding_, window_size=None):
             padding=librosa.time_to_samples(padding_, sr=sr)
-            start=max(librosa.time_to_samples(x['start']-padding, sr=sr),0)
+            start=max(librosa.time_to_samples(x['start'], sr=sr)-padding, 0)
             if window_size:
                 return wav[start:start+window_size]
             else:
@@ -207,13 +210,9 @@ class data_preparation():
             return wav[start:end]
 
         def resampling(x, target_length):
-            if len(x['audio_wav'])!=target_length:
-
-                org_sr=x['sampling_rate']
-                tar_sr_ratio=target_length/len(x['audio_wav'])
-                return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
-            else:
-                return pd.Series([x['audio_wav'], x['sampling_rate']])
+            org_sr=x['sampling_rate']
+            tar_sr_ratio=target_length/len(x['audio_wav'])
+            return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
 
         def check_length(x, target_length):
             if len(x)>target_length:
@@ -230,7 +229,7 @@ class data_preparation():
             track_notes=self.merge_note_label(row['track_id'], converted_notes_collection)
             
         
-            wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']), sr=22050, mono=True)
+            wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']), sr=None, mono=True)
             if fix_length>0:
                 track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_, window_size=fix_length), axis=1)
             else:
@@ -245,9 +244,11 @@ class data_preparation():
         else:
             print('Resampling Audio Data to align data shape')
             target_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).mode()[0]
-            self.notes_collection[['audio_wav_resample', 'resample_sr']]=self.notes_collection.progress_apply(
+            df=self.notes_collection.copy()
+            df[['audio_wav_resample', 'resample_sr']]=df.progress_apply(
                 lambda x:resampling(x, target_length) if len(x['audio_wav'])!=target_length else pd.Series([x['audio_wav'], x['sampling_rate']]) , axis=1)
-            self.notes_collection['audio_wav_resample']=self.notes_collection.audio_wav_resample.progress_apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
+            df['audio_wav_resample']=df.audio_wav_resample.progress_apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
+            self.notes_collection=df.copy()
 
         self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
                                          [int(train*len(self.notes_collection)),
