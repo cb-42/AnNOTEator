@@ -58,7 +58,7 @@ def add_white_noise(audio_clip, noise_ratio=.1, random_state=None):
 
 def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **aug_param_dict):
     """
-    Helper function for applying arbitrary number of augmentations to an dataframe containing audio.
+    Helper function for applying arbitrary number of augmentations to a dataframe containing audio.
     
     Parameters:
         df: Audio dataframe containing the audio_col specified and in which augmentations will be stored.
@@ -79,13 +79,13 @@ def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **au
             }
         apply_augmentations(audio_df, col_names=aug_cols, **aug_params)
     """
-    for func, params in aug_params.items():
+    for func, params in aug_param_dict.items():
         print('Applying {}'.format(func))
-        df[func] = df[audio_col].progress_apply(lambda x: eval('augment_audio.' + func)(x, **params))
+        df[func] = df[audio_col].progress_apply(lambda x: eval(func)(x, **params))
         
     if col_names is not None:
         col_dict = {}
-        for fun, col in zip(aug_params.keys(), col_names):
+        for fun, col in zip(aug_param_dict.keys(), col_names):
             col_dict[fun] = col
         df.rename(columns=col_dict, inplace=True)
         
