@@ -122,11 +122,11 @@ class data_preparation():
         A helper function to extract ticks_per_beat and tempo information from the meta messages in the midi file. 
         These information are required to convert midi time into seconds.
         """
+        ticks_per_beat=self.midi_track.ticks_per_beat
         for msg in self.midi_track.tracks[0]:
-            if msg.type=='time_signature':
-                ticks_per_beat=msg.notated_32nd_notes_per_beat
-            elif msg.type=='set_tempo':
+            if msg.type=='set_tempo':
                 tempo=msg.tempo
+                break
             else:
                 pass
         return (ticks_per_beat, tempo)
@@ -177,8 +177,8 @@ class data_preparation():
             ticks_per_beat, tempo=self.time_meta_extraction()
 
             return [[note[0],
-                     round(mido.tick2second(note[1],ticks_per_beat,tempo)/60,2),
-                     round(mido.tick2second(note[2],ticks_per_beat,tempo)/60,2) ] for note in notes_collection]
+                     round(mido.tick2second(note[1],ticks_per_beat,tempo),2),
+                     round(mido.tick2second(note[2],ticks_per_beat,tempo),2) ] for note in notes_collection]
     
 
         
@@ -230,7 +230,7 @@ class data_preparation():
             track_notes=self.merge_note_label(row['track_id'], converted_notes_collection)
             
         
-            wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']), sr=None, mono=True)
+            wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']), sr=22050, mono=True)
             if fix_length>0:
                 track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_, window_size=fix_length), axis=1)
             else:
