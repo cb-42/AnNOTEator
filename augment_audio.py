@@ -4,7 +4,7 @@ import librosa.display
 from librosa.effects import pitch_shift
 from math import sqrt
 import matplotlib.pyplot as plt
-from numpy import random
+from numpy import mean, random
 from pedalboard import LowpassFilter, Pedalboard, Reverb
 
 
@@ -13,7 +13,7 @@ def add_pedalboard_effects(audio_clip, sample_rate=44100, pb=None, room_size=0.6
     Add pedalboard effects to an audio file.
     
     Parameters:
-        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create().
+        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create_audio_set().
         sample_rate: This number specifies the audio sampling rate.
         pb: pedalboard.Pedalboard initialized with reverb, lowpass filter, and/or other effects. If no Pedalboard object
             is passed, then one will be created using Reverb and LowpassFilter effects.
@@ -33,28 +33,30 @@ def add_pedalboard_effects(audio_clip, sample_rate=44100, pb=None, room_size=0.6
     return pb(audio_clip, sample_rate)
 
 
-def add_white_noise(audio_clip, noise_ratio=.1, random_state=None):
+def add_white_noise(audio_clip, snr=10, random_state=None):
     """
-    Add white noise to an audio signal, scaling by a noise ratio.
+    Add white noise to an audio signal, scaling by a signal to noise ratio.
     
     Parameters:
-        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create().
-        noise_ratio: Floating point to use for scaling the white noise. Higher values will increasingly 
-            overwhelm the original signal.
+        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create_audio_set().
+        snr: Target value to use for signal to noise ratio.
         random_state: Integer seed to use for reproducibility.
             
     Returns:
         An augmented numpy.ndarray, with white noise added according to the noise ratio.
         
     Example usage:
-        wn_clip = add_white_noise(clip, .05)
-        audio_df['wn_audio'] = df.audio_wav.progress_apply(lambda x: add_white_noise(x, noise_ratio=0.5))
+        wn_clip = add_white_noise(clip, random_state=random_state)
+        audio_df['wn_audio'] = df.audio_wav.progress_apply(lambda x: add_white_noise(x, snr=20))
     """
     if random_state is not None:
         random.seed(seed=random_state)
     
-    wn = random.normal(loc=0, scale=audio_clip.std(), size=audio_clip.shape[0])
-    return audio_clip + wn * noise_ratio
+    audio_clip_rms = sqrt(mean(audio_clip**2))
+    noise_rms = sqrt(audio_clip_rms**2/(10**(snr/10)))
+    white_noise = random.normal(loc=0, scale=noise_rms, size=audio_clip.shape[0])
+    
+    return audio_clip + white_noise
 
 
 def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **aug_param_dict):
@@ -74,7 +76,7 @@ def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **au
         
     Example usage:
         aug_params = {
-            'add_white_noise': {'noise_ratio':0.1, 'random_state': random_state},
+            'add_white_noise': {'snr':20, 'random_state': random_state},
             'augment_pitch': {'n_steps':2, 'step_var':range(-1, 2, 1)},
             'add_pedalboard_effects': {}
             }
@@ -99,7 +101,7 @@ def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_
     Augment the pitch of an audio file.
     
     Parameters:
-        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create().
+        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create_audio_set().
         sample_rate: This number specifies the audio sampling rate.
         n_steps: The number of steps to shift the pitch of the audio clip.
         step_var: Optionally supply a range of integers to allow variation in the number of steps taken.
