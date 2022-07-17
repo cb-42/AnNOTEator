@@ -7,7 +7,7 @@ from numpy import random
 from pedalboard import LowpassFilter, Pedalboard, Reverb
 
 
-def add_pedalboard_effects(audio_clip, sample_rate=22050, pb=None, room_size=0.6, cutoff_freq=1000):
+def add_pedalboard_effects(audio_clip, sample_rate=44100, pb=None, room_size=0.6, cutoff_freq=1000):
     """
     Add pedalboard effects to an audio file.
     
@@ -49,9 +49,6 @@ def add_white_noise(audio_clip, noise_ratio=.1, random_state=None):
         wn_clip = add_white_noise(clip, .05)
         audio_df['wn_audio'] = df.audio_wav.progress_apply(lambda x: add_white_noise(x, noise_ratio=0.5))
     """
-    if len(audio_clip) == 0:
-        return audio_clip # Handle case where empty list (no audio) is supplied
-    
     if random_state is not None:
         random.seed(seed=random_state)
     
@@ -59,7 +56,7 @@ def add_white_noise(audio_clip, noise_ratio=.1, random_state=None):
     return audio_clip + wn * noise_ratio
 
 
-def augment_pitch(audio_clip, sample_rate=22050, n_steps=3, step_var=None, bins_per_octave=24,
+def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_per_octave=24,
                   res_type='kaiser_best'):
     """
     Augment the pitch of an audio file.
@@ -79,9 +76,6 @@ def augment_pitch(audio_clip, sample_rate=22050, n_steps=3, step_var=None, bins_
         aug_clip = augment_pitch(clip, n_steps=2, step_var=range(-1, 2, 1))
         audio_df['augmented_pitch'] = audio_df.audio_wav.progress_apply(lambda x: augment_pitch(x, n_steps=2, step_var=range(-1, 2, 1)))
     """
-    if len(audio_clip) == 0:
-        return audio_clip # Handle case where empty list (no audio) is supplied
-    
     if step_var is not None:
         n_steps += random.choice(step_var)
     
@@ -123,7 +117,7 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, alpha=0.5, figsize=(
     
     plt.figure(figsize=figsize)
     
-    for col, lab, alp in list(zip(signal_cols, signal_labs, alpha)): # plot white noise first so other signals are overlaid
+    for col, lab, alp in list(zip(signal_cols, signal_labs, alpha)):
         librosa.display.waveplot(df.loc[i, col], label=lab, alpha=alp) 
     
     plt.legend(signal_labs)    
