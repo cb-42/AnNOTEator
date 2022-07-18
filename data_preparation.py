@@ -54,6 +54,10 @@ class data_preparation():
                                26:'HH_open', 42:'HH_close', 22:'HH_close', 44:'HH_close',
                                49:'CC', 57:'CC', 55:'CC', 52:'CC', 51:'RC',
                                59:'RC', 53:'RC', 39:'CB', 54:'CB', 56:'CB'}
+
+            id_len=self.midi_wav_map[['track_id','wav_length']]
+            id_len.set_index('track_id', inplace=True)
+            self.id_len_dict=id_len.to_dict()['wav_length']
             
         else:
             raise NameError('dataset not supported')
@@ -185,28 +189,35 @@ class data_preparation():
     
 
         
-    def create_audio_set(self, padding_=0.02, train=0.6, val=0.2, test=0.2, random_state=42, fix_length=0):
+    def create_audio_set(self, pad_before=0.02, pad_after=0.02, train=0.6, val=0.2, test=0.2, random_state=42, fix_length=None):
         """
         main function to create training/test/eval dataset from dataset
         
-        :param padding_: padding (in seconds) add to both end of the sliced audio. default 0.02 seconds
+        :param pad_before: padding (in seconds) add to the begining of the sliced audio. default 0.02 seconds
+        :param pad_after: padding (in seconds) add to the end of the sliced audio. default 0.02 seconds
                          The padding actually increas the window length when doing the slicing instead of adding white space before and after.
         :param train, val, test: the train/val/test ratio
         :param random_state: random_state, default 42
-        :param fix_length: setting this length to int >0 will force the sound clip to have exact same length. suggest value is 4000
+        :param fix_length: in seconds, setting this length  will force the sound clip to have exact same length in seconds. suggest value is 0.1~0.2
         """
         tqdm.pandas()
         df_list=[]
         
         if train+val+test!=1: raise ValueError('the total of train, val, test should euqal to 100%') 
         
-        def audio_slicing(x, wav, sr, padding_, window_size=None):
-            padding=librosa.time_to_samples(padding_, sr=sr)
-            start=max(librosa.time_to_samples(x['start'], sr=sr)-padding, 0)
+        def audio_slicing(x, wav, sr, pad_before, pad_after, window_size=None):
+            max_len=len(wav)
+            padding_b=librosa.time_to_samples(pad_before, sr=sr)
+            padding_a=librosa.time_to_samples(pad_after, sr=sr)
+            start=max(librosa.time_to_samples(x['start'], sr=sr)-padding_b, 0)
             if window_size:
-                return wav[start:start+window_size]
+                window_size_samples=librosa.time_to_samples(window_size, sr=sr)
+                if (start+window_size_samples) > max_len:
+                    sliced_wav= wav[start:max_len]
+                    return np.pad(sliced_wav, pad_width=(0,start+window_size_samples-max_len), mode='constant', constant_values=0)
+                return wav[start:start+window_size_samples]
             else:
-                end=min(librosa.time_to_samples(x['end'], sr=sr)+padding, len(wav))
+                end=min(librosa.time_to_samples(x['end'], sr=sr)+padding_a, len(wav))
             return wav[start:end]
 
         def resampling(x, target_length):
@@ -230,16 +241,16 @@ class data_preparation():
             
         
             wav, sr = librosa.load(os.path.join(self.directory_path, row['audio_filename']), sr=None, mono=True)
-            if fix_length>0:
-                track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_, window_size=fix_length), axis=1)
+            if fix_length!=None:
+                track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, pad_before, pad_after, window_size=fix_length), axis=1)
             else:
-                track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, padding_), axis=1)
+                track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, pad_before, pad_after), axis=1)
             track_notes['sampling_rate']=sr
             df_list.append(track_notes)
                        
         self.notes_collection=pd.concat(df_list, ignore_index=True)
         self.notes_collection=self.notes_collection[self.notes_collection['audio_wav'].apply(lambda x:len(x))!=0]
-        if fix_length>0:
+        if fix_length!=None:
             pass
         else:
             print('Resampling Audio Data to align data shape')
@@ -249,6 +260,13 @@ class data_preparation():
                 lambda x:resampling(x, target_length) if len(x['audio_wav'])!=target_length else pd.Series([x['audio_wav'], x['sampling_rate']]) , axis=1)
             df['audio_wav_resample']=df.audio_wav_resample.progress_apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
             self.notes_collection=df.copy()
+
+
+        problematic_tracks=[]
+        for r in tqdm(self.notes_collection.iterrows(), total=self.notes_collection.shape[0]):
+            if r[1].start>self.id_len_dict[r[1].track_id]:
+                problematic_tracks.append(r[1].track_id)
+        self.notes_collection=self.notes_collection[~self.notes_collection.track_id.isin(problematic_tracks)]
 
         self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
                                          [int(train*len(self.notes_collection)),
