@@ -1,0 +1,61 @@
+from spleeter.audio.adapter import AudioAdapter
+from spleeter.separator import Separator
+import librosa
+import pandas as pd
+
+def input_transform(path, resolution=16):
+    """
+    This is a function to transform the input audio file into a ready-dataframe for prediction task  
+    :param path: the path to the audio file
+    :param resolution: the audio clip duration. either 4,8,16,32. 4 means a duration that equal to a quarter note duration in the audio file.
+                        8 means eigth note, and so on
+    """
+    
+    
+    #default to use 4stems pre-train model from the Spleeter package for audio demixing 
+    separator = Separator('spleeter:4stems')
+
+    audio_adapter = AudioAdapter.default()
+    #extract sampling rate from the audio file using the librosa package 
+    y, sr=librosa.load(path, sr=None)
+    sample_rate = sr
+    waveform, _ = audio_adapter.load(path, sample_rate=sample_rate)
+    prediction = separator.separate(waveform)
+
+    #use librosa onset_detection algorithm to extract drum hit
+    drum_track=librosa.to_mono(prediction["drums"].T)
+    onset_frames=librosa.onset.onset_detect(drum_track, sr=sample_rate, hop_length=512, backtrack=True)
+    onset_times=librosa.frames_to_time(onset_frames, sr=sample_rate, hop_length=512)
+    onset_samples = librosa.frames_to_samples(onset_frames, hop_length=512)
+    
+    #calculate note duration for 4,8,16,32 note with respect to the bpm of the song
+    bpm=librosa.beat.tempo(drum_track, sr=sample_rate)[0]
+    q_note_duration=60/bpm
+    eigth_note_duration=60/bpm/2
+    sixteenth_note_duration=60/bpm/4
+    thirty_second_note_duration=60/bpm/8
+    
+    if resolution==4:
+        window_size=librosa.time_to_samples(q_note_duration, sr=sample_rate)
+    elif resolution==8:
+        window_size=librosa.time_to_samples(eigth_note_duration, sr=sample_rate)
+    elif resolution==16:
+        window_size=librosa.time_to_samples(sixteenth_note_duration, sr=sample_rate)
+    elif resolution==32:
+        window_size=librosa.time_to_samples(thirty_second_note_duration, sr=sample_rate)
+    else:
+        raise ValueError('The resolution must be either 4,8,16 or 32') 
+    
+    # create df for prediction task
+    df_dict={'audio_clip':[],
+        'sample_start':[],
+        'sample_end':[],
+        'sampling_rate':[]}
+    window_size=librosa.time_to_samples(sixteenth_note_duration, sr=sample_rate)
+    for onset in onset_samples:
+        df_dict['audio_clip'].append(drum_track[onset:onset+window_size])
+        df_dict['sample_start'].append(onset)
+        df_dict['sample_end'].append(onset+window_size)
+        df_dict['sampling_rate'].append(sample_rate)
+
+    return pd.DataFrame.from_dict(df_dict)
