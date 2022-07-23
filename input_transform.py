@@ -2,8 +2,9 @@ from spleeter.audio.adapter import AudioAdapter
 from spleeter.separator import Separator
 import librosa
 import pandas as pd
+from pytube import YouTube
 
-def input_transform(path, resolution=16):
+def input_transform(path, resolution=8, music_start=None, music_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path: the path to the audio file
@@ -17,9 +18,20 @@ def input_transform(path, resolution=16):
 
     audio_adapter = AudioAdapter.default()
     #extract sampling rate from the audio file using the librosa package 
-    y, sr=librosa.load(path, sr=None)
+    if music_start!= None or music_end!=None:
+        if isinstance(music_start, type(None)):
+            raise ValueError('Please specify the music start time (in seconds) of your file / Youtube link')
+        if isinstance(music_end, type(None)):
+            raise ValueError('Please specify the music end time (in seconds) of your file / Youtube link')
+        y, sr=librosa.load(path, offset=music_start, duration=music_end-music_start, sr=None)
+        waveform, _ = audio_adapter.load(path, offset=music_start, duration=music_end-music_start, sample_rate=sample_rate)
+    else:
+        y, sr=librosa.load(path, sr=None)
+        waveform, _ = audio_adapter.load(path, sample_rate=sample_rate)
+        
+    
     sample_rate = sr
-    waveform, _ = audio_adapter.load(path, sample_rate=sample_rate)
+    
     prediction = separator.separate(waveform)
 
     #use librosa onset_detection algorithm to extract drum hit
@@ -51,7 +63,7 @@ def input_transform(path, resolution=16):
         'sample_start':[],
         'sample_end':[],
         'sampling_rate':[]}
-    window_size=librosa.time_to_samples(sixteenth_note_duration, sr=sample_rate)
+
     for onset in onset_samples:
         df_dict['audio_clip'].append(drum_track[onset:onset+window_size])
         df_dict['sample_start'].append(onset)
@@ -59,3 +71,9 @@ def input_transform(path, resolution=16):
         df_dict['sampling_rate'].append(sample_rate)
 
     return pd.DataFrame.from_dict(df_dict)
+
+
+def get_yt_audio(link):
+    yt = YouTube(link)
+    stream=yt.streams.filter(only_audio=True).order_by('abr').desc().first()
+    return stream.download()
