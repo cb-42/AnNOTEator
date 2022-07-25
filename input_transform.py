@@ -4,13 +4,18 @@ import librosa
 import pandas as pd
 from pytube import YouTube
 
-def input_transform(path, resolution=8, music_start=None, music_end=None, fix_clip_length=True):
+def input_transform(path, resolution=8, music_start=None, music_end=None, fix_clip_length=True, estimated_bpm=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path: the path to the audio file
     :param resolution: the audio clip duration. either 4,8,16,32. 4 means a duration that equal to a quarter note duration in the audio file.
                         8 means eigth note, and so on
     """
+
+    if estimated_bpm==None:
+        print('BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
+        print('Please note that inaccurate BPM value could negatively impact the model performancce.')
+        print('It is strongly reommended to provide an estimated BPM value, even if it is just a proxy.')
     
     
     #default to use 4stems pre-train model from the Spleeter package for audio demixing 
