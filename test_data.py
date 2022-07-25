@@ -1,6 +1,8 @@
 import mido
 from collections import Counter
 
+#this file is not ready yet
+
 note_map={
 33:'Metronome', 
 34:	'Metronome',	 	 
