@@ -4,7 +4,7 @@ import librosa
 import pandas as pd
 from pytube import YouTube
 
-def input_transform(path, resolution=8, music_start=None, music_end=None):
+def input_transform(path, resolution=8, music_start=None, music_end=None, fix_clip_length=True):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path: the path to the audio file
@@ -57,6 +57,8 @@ def input_transform(path, resolution=8, music_start=None, music_end=None):
     else:
         raise ValueError('The resolution must be either 4,8,16 or 32') 
     
+    if fix_clip_length==True:
+        window_size=librosa.time_to_samples(0.2, sr=sample_rate)
     # create df for prediction task
     df_dict={'audio_clip':[],
         'sample_start':[],
@@ -69,7 +71,18 @@ def input_transform(path, resolution=8, music_start=None, music_end=None):
         df_dict['sample_end'].append(onset+window_size)
         df_dict['sampling_rate'].append(sample_rate)
 
-    return pd.DataFrame.from_dict(df_dict)
+    df=pd.DataFrame.from_dict(df_dict)
+
+    #check clip length to align with model requirement
+    def resampling(x, target_length):
+        org_sr=x['sampling_rate']
+        tar_sr_ratio=target_length/len(x['audio_wav'])
+        return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
+    df[['audio_clip', 'sampling_rate']]=df.progress_apply(
+            lambda x:resampling(x, 8820) if len(x['audio_clip'])!=8820 else pd.Series([x['audio_clip'], x['sampling_rate']]) , axis=1)
+
+
+    return df
 
 
 def get_yt_audio(link):
