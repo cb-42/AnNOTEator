@@ -18,6 +18,7 @@ def input_transform(path, resolution=8, music_start=None, music_end=None):
 
     audio_adapter = AudioAdapter.default()
     #extract sampling rate from the audio file using the librosa package 
+    sample_rate = sr
     if music_start!= None or music_end!=None:
         if isinstance(music_start, type(None)):
             raise ValueError('Please specify the music start time (in seconds) of your file / Youtube link')
@@ -29,8 +30,6 @@ def input_transform(path, resolution=8, music_start=None, music_end=None):
         y, sr=librosa.load(path, sr=None)
         waveform, _ = audio_adapter.load(path, sample_rate=sample_rate)
         
-    
-    sample_rate = sr
     
     prediction = separator.separate(waveform)
 
