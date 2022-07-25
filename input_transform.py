@@ -3,8 +3,9 @@ from spleeter.separator import Separator
 import librosa
 import pandas as pd
 from pytube import YouTube
+import warnings
 
-def input_transform(path, resolution=8, music_start=None, music_end=None, fix_clip_length=True, estimated_bpm=None):
+def input_transform(path, resolution=8, music_start=None, music_end=None, fixed_clip_length=True, estimated_bpm=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path: the path to the audio file
@@ -13,9 +14,9 @@ def input_transform(path, resolution=8, music_start=None, music_end=None, fix_cl
     """
 
     if estimated_bpm==None:
-        print('BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
-        print('Please note that inaccurate BPM value could negatively impact the model performancce.')
-        print('It is strongly reommended to provide an estimated BPM value, even if it is just a proxy.')
+        warnings.warn('It is strongly reommended to provide an estimated BPM value, even if it is just a proxy.')
+        print('BPM value not set......BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
+        print('Please note that inaccurate BPM could lead to poor model performancce.')
     
     
     #default to use 4stems pre-train model from the Spleeter package for audio demixing 
@@ -23,16 +24,18 @@ def input_transform(path, resolution=8, music_start=None, music_end=None, fix_cl
 
     audio_adapter = AudioAdapter.default()
     #extract sampling rate from the audio file using the librosa package 
-    sample_rate = sr
+    
     if music_start!= None or music_end!=None:
         if isinstance(music_start, type(None)):
             raise ValueError('Please specify the music start time (in seconds) of your file / Youtube link')
         if isinstance(music_end, type(None)):
             raise ValueError('Please specify the music end time (in seconds) of your file / Youtube link')
         y, sr=librosa.load(path, offset=music_start, duration=music_end-music_start, sr=None)
+        sample_rate = sr
         waveform, _ = audio_adapter.load(path, offset=music_start, duration=music_end-music_start, sample_rate=sample_rate)
     else:
         y, sr=librosa.load(path, sr=None)
+        sample_rate = sr
         waveform, _ = audio_adapter.load(path, sample_rate=sample_rate)
         
     
@@ -62,7 +65,7 @@ def input_transform(path, resolution=8, music_start=None, music_end=None, fix_cl
     else:
         raise ValueError('The resolution must be either 4,8,16 or 32') 
     
-    if fix_clip_length==True:
+    if fixed_clip_length==True:
         window_size=librosa.time_to_samples(0.2, sr=sample_rate)
     # create df for prediction task
     df_dict={'audio_clip':[],
@@ -81,16 +84,17 @@ def input_transform(path, resolution=8, music_start=None, music_end=None, fix_cl
     #check clip length to align with model requirement
     def resampling(x, target_length):
         org_sr=x['sampling_rate']
-        tar_sr_ratio=target_length/len(x['audio_wav'])
-        return pd.Series([librosa.resample(x['audio_wav'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
-    df[['audio_clip', 'sampling_rate']]=df.progress_apply(
+        tar_sr_ratio=target_length/len(x['audio_clip'])
+        return pd.Series([librosa.resample(x['audio_clip'], orig_sr=org_sr, target_sr=int(org_sr*tar_sr_ratio)), int(org_sr*tar_sr_ratio)])
+    df[['audio_clip', 'sampling_rate']]=df.apply(
             lambda x:resampling(x, 8820) if len(x['audio_clip'])!=8820 else pd.Series([x['audio_clip'], x['sampling_rate']]) , axis=1)
 
 
-    return df
+    return df, drum_track, bpm
 
 
 def get_yt_audio(link):
     yt = YouTube(link)
     stream=yt.streams.filter(only_audio=True).order_by('abr').desc().first()
-    return stream.download()
+    path=stream.download()
+    return path
