@@ -13,10 +13,18 @@ def input_transform(path, resolution=8, music_start=None, music_end=None, fixed_
                         8 means eigth note, and so on
     """
 
-    if estimated_bpm==None:
-        warnings.warn('It is strongly reommended to provide an estimated BPM value, even if it is just a proxy.')
-        print('BPM value not set......BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
-        print('Please note that inaccurate BPM could lead to poor model performancce.')
+    
+    if fixed_clip_length==False:      
+        if estimated_bpm==None:
+            warnings.warn('If fixed_clip_length is False, It is strongly reommended to provide an estimated BPM value, even if it is just a proxy.')
+            print('-----------------------------')
+            print('BPM value not set......BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
+            print('Please note that inaccurate BPM could lead to miscalculation of note duration and poor model performancce.')
+        print('-----------------------------')
+        print(f'resolution = {resolution}. ')
+        print(f'{resolution} note duration is set, this means the duration of the sliced audio clip will have the same duration as an {resolution} note in the song')
+        print('It is recommended to set the resolution value either 8 or 16, if not familiar with song structure')
+        print('-----------------------------')
     
     
     #default to use 4stems pre-train model from the Spleeter package for audio demixing 
