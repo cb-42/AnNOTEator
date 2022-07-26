@@ -56,7 +56,11 @@ def input_transform(path, resolution=8, music_start=None, music_end=None, fixed_
     onset_samples = librosa.frames_to_samples(onset_frames, hop_length=512)
     
     #calculate note duration for 4,8,16,32 note with respect to the bpm of the song
-    bpm=librosa.beat.tempo(drum_track, sr=sample_rate)[0]
+    if estimated_bpm != None:
+        bpm=librosa.beat.tempo(drum_track, sr=sample_rate, start_bpm=estimated_bpm)[0]
+    else:
+        bpm=librosa.beat.tempo(drum_track, sr=sample_rate)[0]
+        
     q_note_duration=60/bpm
     eigth_note_duration=60/bpm/2
     sixteenth_note_duration=60/bpm/4
