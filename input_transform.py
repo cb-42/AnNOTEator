@@ -43,7 +43,7 @@ def drum_extraction(path, music_start=None, music_end=None):
     drum_track=librosa.to_mono(prediction["drums"].T)
     return drum_track, sample_rate
 
-def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fixed_clip_length=True):
+def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fixed_clip_length=True, hop_length=512):
 
     """
     This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
@@ -68,12 +68,13 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fix
         print(f'{resolution} note duration is set, this means the duration of the sliced audio clip will have the same duration as an {resolution} note in the song')
         print('It is recommended to set the resolution value either 8 or 16, if not familiar with song structure')
         print('-----------------------------')
-
-    onset_frames=librosa.onset.onset_detect(drum_track, sr=sample_rate, hop_length=512, backtrack=True)
-    peak_frames=librosa.onset.onset_detect(drum_track, sr=sample_rate, hop_length=512)
-    onset_times=librosa.frames_to_time(onset_frames, sr=sample_rate, hop_length=512)
-    onset_samples = librosa.frames_to_samples(onset_frames, hop_length=512)
-    peak_samples = librosa.frames_to_samples(peak_frames, hop_length=512)
+    
+    o_env = librosa.onset.onset_strength(drum_track, sr=44100, hop_length=hop_length)
+    onset_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate, backtrack=True)
+    peak_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate)
+    onset_times=librosa.frames_to_time(onset_frames, sr=sample_rate, )
+    onset_samples = librosa.frames_to_samples(onset_frames*(hop_length/512))
+    peak_samples = librosa.frames_to_samples(peak_frames*(hop_length/512))
     
     #calculate note duration for 4,8,16,32 note with respect to the bpm of the song
     if estimated_bpm != None:
