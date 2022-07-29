@@ -27,7 +27,7 @@ class data_preparation():
     :param directory_path (string): The path to the root directory of the dataset. This class assume the use of GMD / E-GMD dataset
     :param dataset (string): either "gmd" or "egmd" is acceptable for now
     :param sample_ratio (float): the fraction of dataset want to be used in creating the training/test/eval dataset
-    :patam diff_threshold (float): filter out the midi/audio pair that > the duration difference threshold value 
+    :param diff_threshold (float): filter out the midi/audio pair that > the duration difference threshold value 
 
     :raise NameError: the use of other dataset is not supported
     """

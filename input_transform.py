@@ -8,14 +8,14 @@ import warnings
 def drum_extraction(path, music_start=None, music_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
-    :param path: the path to the audio file
-    :param resolution: the audio clip duration. either 4,8,16,32. 4 means a duration that equal to a quarter note duration in the audio file.
-                        8 means eigth note, and so on
+    :param path (str): the path to the audio file
+    :param music_start (int): the start of the music in the file (in seconds). If not set, assume to start at the begining of the track
+    :param music_end (int): the end of the music in the file (in seconds). If not set, assume to end at the end of the track
+
+    :return drum_tracck (numpt array): the extracted drum track
+    :return sample_rate (int): the sampling rate of the extracted drum track
     """
 
-    
-
-    
     
     #default to use 4stems pre-train model from the Spleeter package for audio demixing 
     separator = Separator('spleeter:4stems')
@@ -44,6 +44,18 @@ def drum_extraction(path, music_start=None, music_end=None):
     return drum_track, sample_rate
 
 def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fixed_clip_length=True):
+
+    """
+    This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
+    :param drum_track (numpy array): the extracted drum track
+    :param sample_rate (int): the sampling rate of the drum track
+    :param estimated_bpm (int): beat per minute. it is best to provide a estimated bpm to improve the bpm detection accuracy
+    :param resolution (int): either 8/16/32. default 8. control the window size of the onset sound clip if "fixed_clip_length" is not set. 8 means the window size equal to the 8th note duration (calculated by the bpm value), etc.
+    :param fixed_clip_length (bool): default True. set window_size of the clip to 0.2 seconds as default, override resolution setting if set to True.
+
+    :return df (pd dataframe): the dataframe that contains the information of all onset found in the track
+    :return bpm (float): the estimated bpm value
+    """
 
     if fixed_clip_length==False:      
         if estimated_bpm==None:
