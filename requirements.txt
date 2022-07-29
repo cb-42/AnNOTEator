@@ -1,12 +1,8 @@
-collections
 ffmpeg
-itertools
 librosa
-math
 matplotlib
 mido
 numpy
-os
 pandas
 pedalboard
 pytube
@@ -14,4 +10,3 @@ sklearn
 spleeter
 tensorflow
 tqdm
-warnings
