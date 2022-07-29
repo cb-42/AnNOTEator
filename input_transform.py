@@ -5,7 +5,7 @@ import pandas as pd
 from pytube import YouTube
 import warnings
 
-def input_transform(path, music_start=None, music_end=None):
+def drum_extraction(path, music_start=None, music_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path: the path to the audio file
