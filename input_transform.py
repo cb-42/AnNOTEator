@@ -35,7 +35,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
         
         y, sr=librosa.load(
             path,
-            offset=drum_start if drum_start is not None else None,
+            offset=drum_start if drum_start is not None else 0,
             duration=drum_end-drum_start if drum_end is not None else None,
             sr=None
             )
