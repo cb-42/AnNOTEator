@@ -8,6 +8,27 @@ from numpy import mean, random
 from pedalboard import LowpassFilter, Pedalboard, Reverb
 
 
+def add_lowpass_filter(audio_clip, sample_rate=44100, cutoff_freq=1000):
+    """
+    Add pedalboard.LowpassFilter to an audio file.
+    
+    Parameters:
+        audio_clip: The audio clip is presumed to be a single wav file resulting from data_preparation.create_audio_set().
+        sample_rate: This number specifies the audio sampling rate.
+        cutoff_freq: Value to use as the lowpass filter frequency cutoff.
+        
+    Returns:
+        An augmented numpy.ndarray, with LowpassFilter applied.
+        
+    Example usage:
+        lowpass_clip = add_lowpass_filter(clip, sample_rate, cutoff_freq=1000)
+        audio_df['lowpass_filter'] = audio_df.audio_wav.progress_apply(lambda x: add_lowpass_filter(x, sample_rate))
+    """
+    pb = Pedalboard([LowpassFilter(cutoff_frequency_hz=cutoff_freq)])
+    
+    return pb(audio_clip, sample_rate)
+
+
 def add_pedalboard_effects(audio_clip, sample_rate=44100, pb=None, room_size=0.6, cutoff_freq=1000):
     """
     Add pedalboard effects to an audio file.
@@ -95,7 +116,7 @@ def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **au
     return df
 
 
-def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_per_octave=24,
+def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_per_octave=12,
                   res_type='kaiser_best'):
     """
     Augment the pitch of an audio file.
@@ -105,7 +126,7 @@ def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_
         sample_rate: This number specifies the audio sampling rate.
         n_steps: The number of steps to shift the pitch of the audio clip.
         step_var: Optionally supply a range of integers to allow variation in the number of steps taken.
-        bins_per_octave: This is the number of steps per octave.
+        bins_per_octave: This is the number of steps per octave. By using the 12 bin default, a step is equivalent to a semitone.
         res_type: (str) The resampling strategy to use. By default, the highest quality option is used.
     
     Returns:
