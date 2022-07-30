@@ -1,3 +1,4 @@
+from augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
 import mido
 from mido import MidiFile, Message, MidiTrack, MetaMessage
 import librosa
@@ -10,8 +11,7 @@ import itertools
 import math
 
 
-
-class data_preparation():
+class data_preparation(): 
 
     tqdm.pandas()
 
@@ -271,3 +271,31 @@ class data_preparation():
         self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
                                          [int(train*len(self.notes_collection)),
                                           int((train+val)*len(self.notes_collection))])
+        
+        
+        
+    def augment_audio(self, audio_col='audio_wav_resample', col_names=None, aug_param_dict={}, train_only=False):
+        """
+        Apply audio augmentations to the training or full portion of a prepared audio dataset. The original dataset is modified to contain columns containing the augmented audio.
+        
+        Parameters:
+            audio_col: String specifying the name of source audio column.
+            col_names: Names to use for augmented columns. Defaults to using the augmentation functions
+                as column names.
+            aug_param_dict: Dictionary of function names and associated parameters.
+            train_only: Boolean for whether to augment the training set, or the data in its entirety.
+        
+        Example usage:
+            data_container = data_preparation.data_preparation(gmd_path, dataset='gmd', sample_ratio=sample_ratio)
+            data_container.augment_audio()
+        """
+        if not aug_param_dict:
+            aug_param_dict = {
+                'add_white_noise': {'snr':20, 'random_state': 42},
+                'augment_pitch': {'n_steps':2, 'step_var':range(-1, 2, 1)},
+                'add_pedalboard_effects': {}
+            }
+        if train_only:
+            self.train = apply_augmentations(self.train, audio_col, col_names, **aug_param_dict)
+        else:
+            self.notes_collection = apply_augmentations(self.notes_collection, audio_col, col_names, **aug_param_dict)
