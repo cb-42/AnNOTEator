@@ -23,7 +23,10 @@ def midi_notes_extraction(path):
         if key not in note_map:
             del note_dict[key]
         else:
-            note_dict[note_map[key]] = note_dict.pop(key)
+            if note_map[key] in note_dict.keys():
+                note_dict[note_map[key]] = note_dict[note_map[key]]+note_dict.pop(key)
+            else:
+                note_dict[note_map[key]] = note_dict.pop(key)
     return note_dict
 
 
