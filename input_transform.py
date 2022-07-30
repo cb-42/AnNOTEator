@@ -43,7 +43,7 @@ def drum_extraction(path, music_start=None, music_end=None):
     drum_track=librosa.to_mono(prediction["drums"].T)
     return drum_track, sample_rate
 
-def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fixed_clip_length=True, hop_length=512):
+def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fixed_clip_length=True, hop_length=1024):
 
     """
     This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
