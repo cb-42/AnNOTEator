@@ -1,0 +1,6 @@
+.dockerignore
+.ipynb_checkpoints
+.webm*
+pretrained_models
+__pycache__
+song_midi/

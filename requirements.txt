@@ -1,3 +1,4 @@
+demucs
 ffmpeg
 librosa
 matplotlib
