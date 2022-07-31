@@ -135,6 +135,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fix
     eigth_note_duration=60/bpm/2
     sixteenth_note_duration=60/bpm/4
     thirty_second_note_duration=60/bpm/8
+    
     if backtrack==False:
         padding=librosa.time_to_samples(thirty_second_note_duration/2/2, sr=sample_rate)
     else:
