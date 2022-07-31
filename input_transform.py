@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from demucs import pretrained, apply, audio
 from pathlib import Path
+import multiprocessing
 
 def drum_extraction(path, kernel, drum_start=None, drum_end=None):
     """
@@ -78,7 +79,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
             split=True,
             overlap=0.25,
             progress=True,
-            num_workers=0
+            num_workers=multiprocessing.cpu_count()
             )[0]
         
         sources = sources * ref.std() + ref.mean()
@@ -134,6 +135,10 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fix
     eigth_note_duration=60/bpm/2
     sixteenth_note_duration=60/bpm/4
     thirty_second_note_duration=60/bpm/8
+    if backtrack==False:
+        padding=librosa.time_to_samples(thirty_second_note_duration/2/2, sr=sample_rate)
+    else:
+        pass
     
     if resolution==4:
         window_size=librosa.time_to_samples(q_note_duration, sr=sample_rate)
@@ -155,8 +160,10 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fix
         'sampling_rate':[]}
 
     for onset in onset_samples:
-        df_dict['audio_clip'].append(drum_track[onset:onset+window_size])
-        df_dict['sample_start'].append(onset)
+        if onset-padding<0:
+            onset=0
+        df_dict['audio_clip'].append(drum_track[onset-padding:onset+window_size])
+        df_dict['sample_start'].append(onset-padding)
         df_dict['sample_end'].append(onset+window_size)
         df_dict['sampling_rate'].append(sample_rate)
 
