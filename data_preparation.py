@@ -274,13 +274,13 @@ class data_preparation():
         
         
         
-    def augment_audio(self, audio_col='audio_wav_resample', col_names=None, aug_param_dict={}, train_only=False):
+    def augment_audio(self, audio_col='audio_wav_resample', aug_col_names=None, aug_param_dict={}, train_only=False):
         """
         Apply audio augmentations to the training or full portion of a prepared audio dataset. The original dataset is modified to contain columns containing the augmented audio.
         
         Parameters:
             audio_col: String specifying the name of source audio column.
-            col_names: Names to use for augmented columns. Defaults to using the augmentation functions
+            aug_col_names: Names to use for augmented columns. Defaults to using the augmentation functions
                 as column names.
             aug_param_dict: Dictionary of function names and associated parameters.
             train_only: Boolean for whether to augment the training set, or the data in its entirety.
@@ -296,6 +296,6 @@ class data_preparation():
                 'add_pedalboard_effects': {}
             }
         if train_only:
-            self.train = apply_augmentations(self.train, audio_col, col_names, **aug_param_dict)
+            self.train = apply_augmentations(self.train, audio_col, aug_col_names, **aug_param_dict)
         else:
-            self.notes_collection = apply_augmentations(self.notes_collection, audio_col, col_names, **aug_param_dict)
+            self.notes_collection = apply_augmentations(self.notes_collection, audio_col, aug_col_names, **aug_param_dict)

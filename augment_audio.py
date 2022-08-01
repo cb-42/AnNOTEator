@@ -80,7 +80,7 @@ def add_white_noise(audio_clip, snr=10, random_state=None):
     return audio_clip + white_noise
 
 
-def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **aug_param_dict):
+def apply_augmentations(df, audio_col='audio_wav_resample', aug_col_names=None, **aug_param_dict):
     """
     Helper function for applying arbitrary number of augmentations to a dataframe containing audio.
     
@@ -88,7 +88,7 @@ def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **au
         df: Audio dataframe containing the audio_col specified and in which augmentations will be stored.
         audio_col: String corresponding to the name of the column to use for audio data augmentation,
         in numpy array format.
-        col_names: Names to use for augmented columns. Defaults to using the augmentation functions
+        aug_col_names: Names to use for augmented columns. Defaults to using the augmentation functions
             as column names.
         aug_param_dict: Dictionary of function names and associated parameters.
     
@@ -107,9 +107,9 @@ def apply_augmentations(df, audio_col='audio_wav_resample', col_names=None, **au
         print('Applying {}'.format(func))
         df[func] = df[audio_col].progress_apply(lambda x: eval(func)(x, **params))
         
-    if col_names is not None:
+    if aug_col_names is not None:
         col_dict = {}
-        for fun, col in zip(aug_param_dict.keys(), col_names):
+        for fun, col in zip(aug_param_dict.keys(), aug_col_names):
             col_dict[fun] = col
         df.rename(columns=col_dict, inplace=True)
         
