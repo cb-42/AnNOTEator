@@ -1,4 +1,4 @@
-from .augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
+from augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
 import mido
 from mido import MidiFile, Message, MidiTrack, MetaMessage
 import librosa
@@ -317,7 +317,7 @@ class data_preparation():
         
         
         
-    def augment_audio(self, audio_col='audio_wav_resample', aug_col_names=None, aug_param_dict={}, train_only=False):
+    def augment_audio(self, audio_col='audio_wav', aug_col_names=None, aug_param_dict={}, train_only=False):
         """
         Apply audio augmentations to the training or full portion of a prepared audio dataset. The original dataset is modified to contain columns containing the augmented audio.
         
