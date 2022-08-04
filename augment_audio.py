@@ -80,7 +80,7 @@ def add_white_noise(audio_clip, snr=10, random_state=None):
     return audio_clip + white_noise
 
 
-def apply_augmentations(df, audio_col='audio_wav_resample', aug_col_names=None, **aug_param_dict):
+def apply_augmentations(df, audio_col='audio_wav', aug_col_names=None, **aug_param_dict):
     """
     Helper function for applying arbitrary number of augmentations to a dataframe containing audio.
     
