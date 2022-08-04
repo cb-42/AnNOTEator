@@ -89,7 +89,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
 
     return drum_track, sample_rate
 
-def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=8, fixed_clip_length=True, hop_length=1024, backtrack=True):
+def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fixed_clip_length=False, hop_length=1024, backtrack=False):
 
     """
     This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
