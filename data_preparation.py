@@ -1,4 +1,4 @@
-from augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
+from .augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
 import mido
 from mido import MidiFile, Message, MidiTrack, MetaMessage
 import librosa
@@ -9,6 +9,7 @@ from tqdm.notebook import tqdm
 import numpy as np
 import itertools
 import math
+import sys
 
 
 class data_preparation(): 
@@ -36,6 +37,7 @@ class data_preparation():
         if dataset in ['gmd', 'egmd']:
             self.directory_path=directory_path
             self.dataset_type=dataset
+            self.batch_tracking=0
             csv_path=[f for f in os.listdir(directory_path) if '.csv' in f][0]
             self.dataset=pd.read_csv(os.path.join(directory_path, csv_path)).dropna().sample(frac=sample_ratio).reset_index()
             df=self.dataset[['index', 'midi_filename', 'audio_filename', 'duration']].copy()
@@ -49,9 +51,15 @@ class data_preparation():
             # the midi note mapping is copied from the Google project page. note 39,54,56 are new in 
             # EGMD dataset and Google never assigned it to a code. From initial listening test, these
             # are electronic pad / cowbell sound, temporaily assigned it to CB, CowBell for now
-            self.midi_note_map={36:'KD', 38:'SD', 40:'SD', 37:'SD_xstick', 48:'HT', 50:'HT',
-                               45:'MT', 47:'MT', 43:'FT' ,58:'FT', 46:'HH_open', 
-                               26:'HH_open', 42:'HH_close', 22:'HH_close', 44:'HH_close',
+            # self.midi_note_map={36:'KD', 38:'SD', 40:'SD', 37:'SD_xstick', 48:'HT', 50:'HT',
+            #                    45:'MT', 47:'MT', 43:'FT' ,58:'FT', 46:'HH_open', 
+            #                    26:'HH_open', 42:'HH_close', 22:'HH_close', 44:'HH_close',
+            #                    49:'CC', 57:'CC', 55:'CC', 52:'CC', 51:'RC',
+            #                    59:'RC', 53:'RC', 39:'CB', 54:'CB', 56:'CB'}
+
+            self.midi_note_map={36:'KD', 38:'SD', 40:'SD', 37:'SD', 48:'TT', 50:'TT',
+                               45:'TT', 47:'TT', 43:'TT' ,58:'TT', 46:'HH', 
+                               26:'HH', 42:'HH', 22:'HH', 44:'HH',
                                49:'CC', 57:'CC', 55:'CC', 52:'CC', 51:'RC',
                                59:'RC', 53:'RC', 39:'CB', 54:'CB', 56:'CB'}
 
@@ -189,7 +197,7 @@ class data_preparation():
     
 
         
-    def create_audio_set(self, pad_before=0.02, pad_after=0.02, train=0.6, val=0.2, test=0.2, random_state=42, fix_length=None):
+    def create_audio_set(self, pad_before=0.02, pad_after=0.02, train=0.6, val=0.2, test=0.2, random_state=42, fix_length=None, batching=False, dir_path=None):
         """
         main function to create training/test/eval dataset from dataset
         
@@ -200,6 +208,10 @@ class data_preparation():
         :param random_state: random_state, default 42
         :param fix_length: in seconds, setting this length  will force the sound clip to have exact same length in seconds. suggest value is 0.1~0.2
         """
+        if batching==True and dir_path==None:
+            raise TypeError('please specify directory path for saving pickle files')
+
+        
         tqdm.pandas()
         df_list=[]
         
@@ -231,6 +243,30 @@ class data_preparation():
             elif len(x)<target_length:
                 return np.pad(x, (0, target_length-len(x)), 'constant')
 
+        def create_df(df_list):
+            self.notes_collection=pd.concat(df_list, ignore_index=True)
+            self.notes_collection=self.notes_collection[self.notes_collection['audio_wav'].apply(lambda x:len(x))!=0]
+            if fix_length!=None:
+                pass
+            else:
+                print('Resampling Audio Data to align data shape')
+                target_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).mode()[0]
+                df=self.notes_collection.copy()
+                df[['audio_wav_resample', 'resample_sr']]=df.progress_apply(
+                    lambda x:resampling(x, target_length) if len(x['audio_wav'])!=target_length else pd.Series([x['audio_wav'], x['sampling_rate']]) , axis=1)
+                df['audio_wav_resample']=df.audio_wav_resample.progress_apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
+                self.notes_collection=df.copy()
+
+
+            problematic_tracks=[]
+            for r in tqdm(self.notes_collection.iterrows(), total=self.notes_collection.shape[0]):
+                if r[1].start>self.id_len_dict[r[1].track_id]:
+                    problematic_tracks.append(r[1].track_id)
+            
+            self.notes_collection=self.notes_collection[~self.notes_collection.track_id.isin(problematic_tracks)]
+
+
+
         print('Generating Dataset')
         for key, row in tqdm(self.midi_wav_map.iterrows(), total=self.midi_wav_map.shape[0]):
             if row['midi_filename']=='drummer1/session1/78_jazz-fast_290_beat_4-4.mid':
@@ -247,30 +283,37 @@ class data_preparation():
                 track_notes['audio_wav']=track_notes.apply(lambda x:audio_slicing(x, wav, sr, pad_before, pad_after), axis=1)
             track_notes['sampling_rate']=sr
             df_list.append(track_notes)
-                       
-        self.notes_collection=pd.concat(df_list, ignore_index=True)
-        self.notes_collection=self.notes_collection[self.notes_collection['audio_wav'].apply(lambda x:len(x))!=0]
-        if fix_length!=None:
-            pass
-        else:
-            print('Resampling Audio Data to align data shape')
-            target_length=self.notes_collection['audio_wav'].apply(lambda x:len(x)).mode()[0]
-            df=self.notes_collection.copy()
-            df[['audio_wav_resample', 'resample_sr']]=df.progress_apply(
-                lambda x:resampling(x, target_length) if len(x['audio_wav'])!=target_length else pd.Series([x['audio_wav'], x['sampling_rate']]) , axis=1)
-            df['audio_wav_resample']=df.audio_wav_resample.progress_apply(lambda x:check_length(x, target_length) if len(x)!=target_length else x)
-            self.notes_collection=df.copy()
+            if batching==True:
+                if len(df_list)>(self.midi_wav_map.shape[0]/50):
+                    create_df(df_list)
+                    self.notes_collection.to_pickle(os.path.join(dir_path, f"dataset_{self.batch_tracking}.pkl"))
+                    # self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
+                    #             [int(train*len(self.notes_collection)),
+                    #             int((train+val)*len(self.notes_collection))])
+                    # self.train.to_pickle(os.path.join(dir_path, f"train_{self.batch_tracking}.pkl"))
+                    # self.val.to_pickle(os.path.join(dir_path, f"val_{self.batch_tracking}.pkl"))
+                    # self.test.to_pickle(os.path.join(dir_path, f"test_{self.batch_tracking}.pkl"))
+                    print(f'saved batch {self.batch_tracking} data at {dir_path}')
+                    self.batch_tracking=self.batch_tracking+1
+                    df_list=[]
+                    self.notes_collection=pd.DataFrame()
+                    # del self.train
+                    # del self.val
+                    # del self.test
 
+                else:
+                    pass
+            else:
+                pass
+        create_df(df_list)
+        self.notes_collection.to_pickle(os.path.join(dir_path, f"dataset_{self.batch_tracking}.pkl"))
+        
+        # self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
+        #                     [int(train*len(self.notes_collection)),
+        #                     int((train+val)*len(self.notes_collection))])
+        
+        print('Done!')
 
-        problematic_tracks=[]
-        for r in tqdm(self.notes_collection.iterrows(), total=self.notes_collection.shape[0]):
-            if r[1].start>self.id_len_dict[r[1].track_id]:
-                problematic_tracks.append(r[1].track_id)
-        self.notes_collection=self.notes_collection[~self.notes_collection.track_id.isin(problematic_tracks)]
-
-        self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
-                                         [int(train*len(self.notes_collection)),
-                                          int((train+val)*len(self.notes_collection))])
         
         
         
