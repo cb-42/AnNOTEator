@@ -5,7 +5,7 @@ import numpy as np
 class drum_transcriber():
     
     def __init__(self, prediction_df, song_duration, bpm, sample_rate, note_offset=None):
-        
+        self.offset=False
         self.bpm=bpm
         self.df=prediction_df
         self.sample_rate=sample_rate
@@ -23,6 +23,9 @@ class drum_transcriber():
         else:
             pass
         
+        if note_offset>0:
+            self.offset=True    
+
         _8_div=self.get_eighth_note_time_grid(song_duration, note_offset=note_offset)
         self.synced_8_div=self.sync_8(_8_div)
         
@@ -58,7 +61,8 @@ class drum_transcriber():
             else:
                 diff_log=diff_log+diff
                 synced_8_div.append(note+diff_log)
-
+        if self.offset==True:
+            [synced_8_div.insert(0, synced_8_div[0]-self._8_duration) for i in range(4)]
         return np.array(synced_8_div)
     
     def get_note_division(self):
