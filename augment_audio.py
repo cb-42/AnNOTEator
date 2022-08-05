@@ -70,7 +70,7 @@ def add_white_noise(audio_clip, snr=10, random_state=None):
         wn_clip = add_white_noise(clip, random_state=random_state)
         audio_df['wn_audio'] = df.audio_wav.progress_apply(lambda x: add_white_noise(x, snr=20))
     """
-    if random_state is not None:
+    if isinstance(random_state, int):
         random.seed(seed=random_state)
     
     audio_clip_rms = sqrt(mean(audio_clip**2))
@@ -142,6 +142,50 @@ def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_
     return pitch_shift(audio_clip, sr=sample_rate, n_steps=n_steps, bins_per_octave=bins_per_octave, res_type=res_type)
 
 
+def augment_spectrogram_spans(spec, spans=3, span_ranges=[[1,4], [1,6]], span_variation=1,
+                              ind_lists=None, sig_val=None):
+    """
+    Set spectrogram (or other 2-d numpy array) span(s) to background or another signal.
+    
+    Parameters:
+        spec: Numpy array; presumed to be a spectrogram or other signal approprtiate for dropout augmentation.
+        spans: Integer corresponding to the number of dropout spans to construct.
+        span_ranges: List of lists corresponding to integers for x and y dimensions used in spans.
+        span_variation: Integer corresponding to variation to introduce into span lengths.
+        ind_lists: List of lists corresponding to array indices to augment; By default, a list will be
+            created.
+        sig_val: value to set sub arrays to; minimum (background) value is used by default.
+    
+    Returns:
+        An augmented spectrogram (or other numpy array) with dropout spans applied.
+        
+    Example usage (note that input should be copied to avoid overwriting the original signal, if desired):
+        audio_df['mel_spec_dropout'] = audio_df.mel_spec.progress_apply(lambda x: augment_spectrogram_spans(x.copy)))
+    
+    """
+    if not sig_val:
+        sig_val = spec.min() # use for setting to background
+        
+    if not isinstance(spans, int):
+        print('Value supplied for spans supplied was not an integer. Setting spans to 1.')
+        spans = 1
+    
+    if not ind_lists:
+        ind_lists = []
+        dims = spec.shape
+        for i in range(0, spans):
+            x_inds = get_span_indices(dims[1], min_span=span_ranges[0][0], max_span=span_ranges[0][1],
+                                 span_variation=span_variation)
+            y_inds = get_span_indices(dims[0], min_span=span_ranges[1][0], max_span=span_ranges[1][1],
+                                 span_variation=span_variation)
+            ind_lists.append([x_inds, y_inds])
+    
+    for ind_list in ind_lists: # y then x based on current naming
+        spec[ind_list[1][0]:ind_list[1][1]+1:, ind_list[0][0]:ind_list[0][1]+1] = sig_val
+    
+    return spec
+
+
 def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, max_pts=None, alpha=0.5, fontsizes=[24, 18, 20], figsize=(16, 12), leg_loc='best'):
     """
     Visually compare the effect of various augmentations on the same signal's amplitude envelope (or other signals 
@@ -187,3 +231,46 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, m
     plt.title('Comparison of audio clips for element: {}, label: {}'.format(i, df.loc[i, 'label']), fontsize=fontsizes[0])
     plt.gca().xaxis.label.set_size(fontsizes[1])
     plt.legend(signal_labs, loc=leg_loc, fontsize=fontsizes[2])    
+
+    
+def get_span_indices(dim, min_span=5, max_span=None, span_variation=0):
+    """
+    Helper function to find array indices for spectrogram augmentation.
+    
+    dim: Integer representing the dimension of an array.
+    min_span: Integer for minimum span length; may be less than min_span if lower bound is near 0.
+    max_span: Integer for maximum span length, defaults to None. Uses lower bound to set max span.
+    span_variation: Integer corresponding to variation to introduce into span lengths.
+    
+    Returns:
+        Span indices
+    
+    Example usage: 
+        get_span_indices(dim=spec.shape[0], min_span=1, max_span=5, span_variation=1)
+    """
+    
+    # Add variation to min/max span lengths
+    new_spans = []
+    for span_length in (min_span, max_span):
+        span_length += random.randint(low=-span_variation, high=span_variation + 1)
+        if span_length <= 0:
+            span_length = 1
+        new_spans.append(span_length)
+    min_span, max_span = new_spans
+    
+    # Create spans
+    inds = sorted(random.randint(low=0, high=dim, size=2)) # upper bound not inclusive
+    if inds[0] == inds[1]:
+        if inds[0] == 0: # account for larger span or add to high end when result would be < 0?
+            inds[1] += min(min_span, ((dim-1) - inds[1]))
+        else:
+            inds[0] -= min(min_span, inds[0])
+    else:
+        diff = abs(inds[0] - inds[1])
+        if diff < min_span: # consider whether to optionally add to end rather than subtract from start
+            inds[0] -= min((min_span - diff), inds[0])
+        if isinstance(max_span, int):
+            if diff > max_span: # consider whether to optionally add to end rather than subtract from start
+                inds[1] = (inds[0] + max_span)
+
+    return inds
