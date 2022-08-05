@@ -5,7 +5,11 @@ Greetings! This is our Summer 2022 Capstone Project for the Master of Applied Da
 - tbd
 
 ## Software
-Our requirements.txt file has a list of the Python library dependencies needed to run our Python scripts and Jupyter notebooks.
+Our requirements.txt file has a list of the Python library dependencies needed to run our Python scripts and Jupyter notebooks. Due to differing version dependencies in the model training and audio inference portions of the workflow, two environments are recommended.
+
+A Docker image for audio input processing for inference can be acquired from the project [Docker Hub repository](https://hub.docker.com/r/cbrown42/annoteators_project). 
+
+Note that if you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as ffmpeg, as noted [here](https://pypi.org/project/spleeter/).
 
 ## Source data  
 - tbd
