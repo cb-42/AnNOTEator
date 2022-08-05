@@ -4,7 +4,7 @@ import numpy as np
 
 class drum_transcriber():
     
-    def __init__(self, prediction_df, song_duration, bpm, sample_rate, note_offset=0):
+    def __init__(self, prediction_df, song_duration, bpm, sample_rate, note_offset=None):
         
         self.bpm=bpm
         self.df=prediction_df
@@ -12,6 +12,16 @@ class drum_transcriber():
         self.onsets=prediction_df.peak_sample
         self.note_line=self.onsets.apply(lambda x: librosa.samples_to_time(x, sr=sample_rate)).to_numpy()
         self.get_note_duration()
+
+        if note_offset==None:
+            total_8_note=[]
+            for n in range(20):
+                temp_8_div=self.get_eighth_note_time_grid(song_duration, note_offset=n)
+                temp_synced_8_div=self.sync_8(temp_8_div)
+                total_8_note.append(len(np.intersect1d(np.around(self.note_line,8), np.around(temp_synced_8_div,8))))
+            note_offset=np.argmax(total_8_note)
+        else:
+            pass
         
         _8_div=self.get_eighth_note_time_grid(song_duration, note_offset=note_offset)
         self.synced_8_div=self.sync_8(_8_div)
