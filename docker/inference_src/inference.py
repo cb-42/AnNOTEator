@@ -2,10 +2,8 @@ import argparse
 # import librosa
 import pandas as pd
 import numpy as np
-# from tensorflow import keras
-import sys
-import warnings
 from tensorflow import keras
+import sys
     
     
 def main():
