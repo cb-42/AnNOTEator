@@ -131,7 +131,5 @@ dmypy.json
 # Docker
 docker/pretrained_models/
 docker/song_midi/
-docker/inference_src/
-docker/input_src/
 docker/test/
 docker/*.webm
