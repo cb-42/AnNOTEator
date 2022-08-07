@@ -279,4 +279,5 @@ class drum_transcriber():
                             n.notehead='x'
                         n.stemDirection='up'
                         s.append(n)
+        s=s.makeMeasures()
         return s
