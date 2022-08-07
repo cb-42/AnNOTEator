@@ -1,0 +1,10 @@
+ffmpeg
+librosa
+matplotlib
+mido
+numpy
+pandas
+pedalboard
+sklearn
+tqdm
+tensorflow
