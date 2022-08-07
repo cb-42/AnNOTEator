@@ -5,7 +5,7 @@ from music21 import *
 
 class drum_transcriber():
     
-    def __init__(self, prediction_df, song_duration, bpm, sample_rate, beats_in_measure, quarter_note_beat, note_offset=None):
+    def __init__(self, prediction_df, song_duration, bpm, sample_rate, beats_in_measure=4, quarter_note_beat=4, note_offset=None):
         self.offset=False
         self.beats_in_measure=beats_in_measure*2
         self.quarter_note_beat=quarter_note_beat
