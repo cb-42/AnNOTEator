@@ -1,11 +1,14 @@
 import pandas as pd
 import librosa
 import numpy as np
+from music21 import * 
 
 class drum_transcriber():
     
-    def __init__(self, prediction_df, song_duration, bpm, sample_rate, note_offset=None):
+    def __init__(self, prediction_df, song_duration, bpm, sample_rate, beats_in_measure, quarter_note_beat, note_offset=None):
         self.offset=False
+        self.beats_in_measure=beats_in_measure*2
+        self.quarter_note_beat=quarter_note_beat
         self.bpm=bpm
         self.df=prediction_df
         self.sample_rate=sample_rate
@@ -35,6 +38,14 @@ class drum_transcriber():
                                                                                                                               _32_div,
                                                                                                                               _8_triplet_div,
                                                                                                                               _8_sixlet_div)
+        
+        
+        self.pitch_dict=self.get_pitch_dict()
+        stream_time_map, stream_pitch, stream_note=self.build_stream()
+        music21_data=self.get_music21_data(stream_time_map, stream_pitch, stream_note)
+        self.sheet=self.sheet_construction(music21_data)
+        
+
     def get_note_duration(self):
         self._8_duration=60/self.bpm/2
         self._16_duration=60/self.bpm/4
@@ -62,7 +73,7 @@ class drum_transcriber():
                 diff_log=diff_log+diff
                 synced_8_div.append(note+diff_log)
         if self.offset==True:
-            [synced_8_div.insert(0, synced_8_div[0]-self._8_duration) for i in range(4)]
+            [synced_8_div.insert(0, synced_8_div[0]-self._8_duration) for i in range(self.beats_in_measure)]
         return np.array(synced_8_div)
     
     def get_note_division(self):
@@ -141,3 +152,131 @@ class drum_transcriber():
         for div in [synced_16_div, synced_32_div, synced_8_3_div, synced_8_6_div]:
             synced_8_div_clean=synced_8_div_clean[~np.in1d(np.around(synced_8_div_clean,8), np.around(div, 8))]
         return synced_8_div_clean, np.array(synced_16_div), np.array(synced_32_div), np.array(synced_8_3_div), np.array(synced_8_6_div)
+    
+    def build_measure(self, measure_iter):
+        
+        synced_16_div=np.around(self.synced_16_div,8)
+        synced_32_div=np.around(self.synced_32_div,8)
+        synced_8_3_div=np.around(self.synced_8_3_div,8)
+        synced_8_6_div=np.around(self.synced_8_6_div,8)
+        measure=[]
+        note_dur=[]
+        for note in measure_iter:
+            _div=False
+            for div in [(synced_16_div,2,0.25), (synced_32_div,4,0.125), (synced_8_3_div,3,1/6), (synced_8_6_div,6,1/12)]:
+                if note in div[0]:
+                    pos=np.where(div[0] == note)
+                    pos=pos[0][0]
+                    measure.append(list(div[0][pos:pos+div[1]]))
+                    note_dur.append([div[2]]*div[1])
+                    _div=True
+            if _div==False:
+                measure.append([note])
+                note_dur.append([0.5])
+
+        measure=[item for sublist in measure for item in sublist]
+        note_dur=[item for sublist in note_dur for item in sublist]
+        return measure, note_dur
+
+    def get_pitch_dict(self):
+        pitch_mapping=self.df.loc[:, 'peak_sample':'CC'].set_index('peak_sample')
+        pitch_mapping=pitch_mapping.to_dict(orient='index')
+        pitch_dict={}
+        for p in pitch_mapping.keys():
+            pitch_dict[round(librosa.samples_to_time(p, sr=self.sample_rate),8)]=[d for d in pitch_mapping[p].keys() if pitch_mapping[p][d]==1]
+        return pitch_dict
+
+    def build_stream(self):
+        measure_log=0
+        stream_time_map=[]
+        stream_pitch=[]
+        stream_note=[]
+        synced_8_div=np.around(self.synced_8_div,8)
+        for i in range(len(synced_8_div) //self.beats_in_measure):
+
+            measure_iter=list(synced_8_div[measure_log: measure_log + self.beats_in_measure])
+            measure, note_dur=self.build_measure(measure_iter)
+            stream_time_map.append(measure)
+            stream_note.append(note_dur)
+            measure_log=measure_log+self.beats_in_measure
+
+        remaining_8=len(synced_8_div)%self.beats_in_measure
+        measure, note_dur=self.build_measure(synced_8_div[-remaining_8:])
+        measure.extend([-1]*(self.beats_in_measure-remaining_8))
+        note_dur.extend([8]*(self.beats_in_measure-remaining_8))
+
+        stream_time_map.append(measure)
+        stream_note.append(note_dur)
+
+        for measure in stream_time_map:
+            pitch_set=[]
+            for note in measure:
+                if note in self.pitch_dict.keys():
+                    if len(self.pitch_dict[note])==0:
+                        pitch_set.append(['rest'])
+                    else:    
+                        pitch_set.append(self.pitch_dict[note])
+                else:
+                    pitch_set.append(['rest'])
+            stream_pitch.append(pitch_set)
+        return stream_time_map, stream_pitch, stream_note
+
+    def get_music21_data(self,stream_time_map, stream_pitch, stream_note):
+        music21_data=[]
+        for i in range(len(stream_time_map)):
+            music21_data.append(list(zip(stream_note[i], stream_pitch[i])))
+        return music21_data
+
+    def duration_set(self,pred_note):
+        if pred_note[0]==1/6:
+            t = duration.Tuplet(3, 3)
+            t.setDurationType('eighth')
+            d = duration.Duration(pred_note[0])
+            d.appendTuplet(t)
+        elif pred_note[0]==1/12:
+            t = duration.Tuplet(6, 3)
+            t.setDurationType('eighth')
+            d = duration.Duration(pred_note[0])
+            d.appendTuplet(t)
+        else:
+            d=duration.Duration(pred_note[0])
+        return d
+    
+
+    def sheet_construction(self, music21_data):
+        
+        label_pitch_map={'KD':'F4', 'SD':'C5', 'SD_xstick':'C5', 'HH_close':'G5', 'HH_open':'G5', 'RC':'G5', 'CC':'A5', 'HT':'E5',
+                        'MT':'D5', 'FT':'A4', 'HH':'G5', 'TT':'E5'}
+        
+        s=stream.Stream()
+        s.insert(0,meter.TimeSignature(f'{int(self.beats_in_measure/2)}/{self.quarter_note_beat}'))
+        for _measure in music21_data:
+            for pred_note in _measure:
+                if pred_note[1][0]=='rest':
+                    n=note.Rest()
+                    d=self.duration_set(pred_note)
+                    n.duration=d 
+                    n.stemDirection='up'
+                    s.append(n)
+                else:
+                    if len(pred_note[1])>1:
+                        notes_group=[]
+                        for i in range(len(pred_note[1])):
+                            _n=note.Unpitched(label_pitch_map[pred_note[1][i]])
+                            if pred_note[1][i] in ['HH_close', 'HH_open', 'RC', 'HH']:
+                                _n.notehead='x'
+                            notes_group.append(_n)
+                        n=percussion.PercussionChord(notes_group)
+                        d=self.duration_set(pred_note)
+                        n.duration=d 
+                        n.stemDirection='up'
+                        s.append(n)
+                    else:
+                        n=note.Unpitched(label_pitch_map[pred_note[1][0]])
+                        d=self.duration_set(pred_note)
+                        n.duration=d 
+                        if pred_note[1][0] in ['HH_close', 'HH_open', 'RC', 'HH']:
+                            n.notehead='x'
+                        n.stemDirection='up'
+                        s.append(n)
+        return s

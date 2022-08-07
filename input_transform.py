@@ -109,6 +109,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
             print('-----------------------------')
             print('BPM value not set......BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
             print('Please note that inaccurate BPM could lead to miscalculation of note duration and poor model performancce.')
+
         print('-----------------------------')
         print(f'resolution = {resolution}. ')
         print(f'{resolution} note duration is set, this means the duration of the sliced audio clip will have the same duration as an {resolution} note in the song')
@@ -127,9 +128,21 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
     
     #calculate note duration for 4,8,16,32 note with respect to the bpm of the song
     if estimated_bpm != None:
-        bpm=librosa.beat.tempo(drum_track, sr=sample_rate, start_bpm=estimated_bpm)[0]
+        pass
     else:
-        bpm=librosa.beat.tempo(drum_track, sr=sample_rate)[0]
+        _8_duration=pd.Series(peak_samples).diff().mode()[0]
+        estimated_bpm=60/(librosa.samples_to_time(_8_duration, sr=sample_rate)*2)
+    print(estimated_bpm)
+    bpm=librosa.beat.tempo(drum_track, sr=sample_rate, start_bpm=estimated_bpm)[0]
+
+    if bpm>110:
+        hop_length=512
+        o_env = librosa.onset.onset_strength(drum_track, sr=sample_rate, hop_length=hop_length)
+        onset_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate, backtrack=backtrack)
+        peak_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate)
+        onset_times=librosa.frames_to_time(onset_frames, sr=sample_rate, )
+        onset_samples = librosa.frames_to_samples(onset_frames*(hop_length/512))
+        peak_samples = librosa.frames_to_samples(peak_frames*(hop_length/512))
         
     q_note_duration=60/bpm
     eigth_note_duration=60/bpm/2
