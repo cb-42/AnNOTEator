@@ -17,7 +17,7 @@ Note that if you wish to use the Python `Spleeter` library for audio data prepar
 
 # How this works?
 
-<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.png" 
+<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.jpg" 
      alt="Annoteators Flow Diagram" width="740">
 
 
