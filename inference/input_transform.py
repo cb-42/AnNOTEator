@@ -132,7 +132,6 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
     else:
         _8_duration=pd.Series(peak_samples).diff().mode()[0]
         estimated_bpm=60/(librosa.samples_to_time(_8_duration, sr=sample_rate)*2)
-    print(estimated_bpm)
     bpm=librosa.beat.tempo(drum_track, sr=sample_rate, start_bpm=estimated_bpm)[0]
 
     if bpm>110:
@@ -156,7 +155,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
         pass
     
     if resolution==None:
-        window_size=pd.Series(onset_samples).diff().quantile(q=0.1)
+        window_size=int(pd.Series(onset_samples).diff().quantile(q=0.1))
     elif resolution==4:
         window_size=librosa.time_to_samples(q_note_duration, sr=sample_rate)
     elif resolution==8:
