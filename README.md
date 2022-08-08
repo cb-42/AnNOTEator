@@ -20,7 +20,7 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 
 # Workflow
 
-<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.png" align="center"
+<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.png" 
      alt="Annoteators Flow Diagram" width="740">
 
 ## Data Processing
