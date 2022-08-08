@@ -133,3 +133,4 @@ docker/pretrained_models/
 docker/song_midi/
 docker/test/
 docker/*.webm
+MuseScore*
