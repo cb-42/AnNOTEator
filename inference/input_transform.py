@@ -150,11 +150,14 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
     thirty_second_note_duration=60/bpm/8
     
     if backtrack==False:
-        padding=librosa.time_to_samples(thirty_second_note_duration/2/2, sr=sample_rate)
+#        padding=librosa.time_to_samples(thirty_second_note_duration/2/2, sr=sample_rate)
+        padding=librosa.time_to_samples(0.02, sr=sample_rate)
     else:
         pass
     
-    if resolution==4:
+    if resolution==None:
+        window_size=pd.Series(onset_samples).diff().quantile(q=0.1)
+    elif resolution==4:
         window_size=librosa.time_to_samples(q_note_duration, sr=sample_rate)
     elif resolution==8:
         window_size=librosa.time_to_samples(eigth_note_duration, sr=sample_rate)
@@ -162,8 +165,10 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
         window_size=librosa.time_to_samples(sixteenth_note_duration, sr=sample_rate)
     elif resolution==32:
         window_size=librosa.time_to_samples(thirty_second_note_duration, sr=sample_rate)
+    elif resolution<1:
+        window_size=librosa.time_to_samples(resolution, sr=sample_rate)
     else:
-        raise ValueError('The resolution must be either 4,8,16 or 32') 
+        raise ValueError ('Resolution parameter is not properly set. The value should be either note duration (by setting it between 4/8/16/32) or specifying the resolution by second (only accept the value <1 second)')
     
     if fixed_clip_length==True:
         window_size=librosa.time_to_samples(0.2, sr=sample_rate)
