@@ -12,14 +12,16 @@ A Docker image for audio input processing for inference can be acquired from the
 Note that if you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as ffmpeg, as noted [here](https://pypi.org/project/spleeter/).
 
 ## Source data  
-- tbd
+This project used The Expanded Groove MIDI Dataset (E-GMD) for model development. E-GMD Dataset is a large dataset of human drum performances, with audio recordings annotated in MIDI. E-GMD contains 444 hours of audio from 43 drum kits and is an order of magnitude larger than similar datasets. It is also the first human-performed drum transcription dataset with annotations of velocity.
 
+The E-GMD dataset was developed by a group of Google Researchers. For more information about how the dataset was created and several applications of it, please see the paper where it was introduced: [Improving Perceptual Quality of Drum Transcription with the Expanded Groove MIDI Dataset](https://goo.gl/magenta/e-gmd-paper).
 # Introduction
 - tbd
 
 # Workflow
 
-- Diagram
+<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.png" align="center"
+     alt="Annoteators Flow Diagram" width="740">
 
 ## Data Processing
 - tbd
@@ -35,3 +37,13 @@ Note that if you wish to use the Python `Spleeter` library for audio data prepar
 
 # Additional Resources
 - tbd
+
+# Reference
+This software uses the following open source packages:
+
+- [Demucs](https://github.com/facebookresearch/demucs)
+- [Librosa](https://github.com/librosa/librosa)
+- [Mido](https://github.com/mido/mido/)
+- [Music21](https://github.com/cuthbertLab/music21)
+- [Spleeter](https://github.com/deezer/spleeter)
+
