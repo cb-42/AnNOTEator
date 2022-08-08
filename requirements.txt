@@ -3,6 +3,7 @@ ffmpeg
 librosa
 matplotlib
 mido
+music21
 numpy
 pandas
 pedalboard
