@@ -89,7 +89,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
 
     return drum_track, sample_rate
 
-def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fixed_clip_length=False, hop_length=1024, backtrack=False):
+def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, fixed_clip_length=False, hop_length=1024, backtrack=False):
 
     """
     This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
@@ -171,7 +171,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
         raise ValueError ('Resolution parameter is not properly set. The value should be either note duration (by setting it between 4/8/16/32) or specifying the resolution by second (only accept the value <1 second)')
     
     if fixed_clip_length==True:
-        window_size=librosa.time_to_samples(0.2, sr=sample_rate)
+        window_size=librosa.time_to_samples(0.18, sr=sample_rate)
     # create df for prediction task
     df_dict={'audio_clip':[],
         'sample_start':[],
