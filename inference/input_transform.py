@@ -3,7 +3,6 @@ from spleeter.separator import Separator
 import librosa
 import pandas as pd
 from pytube import YouTube
-import warnings
 import numpy as np
 from demucs import pretrained, apply, audio
 from pathlib import Path
@@ -61,7 +60,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
         model_3=pretrained.get_model(name='7fd6ef75', repo=Path('pretrained_models\demucs'))
         model_4=pretrained.get_model(name='83fc094f', repo=Path('pretrained_models\demucs'))
         model=apply.BagOfModels([model_1,model_2,model_3,model_4])
-
+        print('The demucs kernel is a bag of 4 models. The track will be processed 4 times and output the best one. You will see 4 progress bars per track.')
         wav=audio.AudioFile(path).read(
             streams=0,
             samplerate=model.samplerate,
@@ -70,6 +69,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
             duration=drum_end-drum_start if drum_end is not None else None
             )
 
+        print('The task will use all your available CPU cores by default. Although it is possible to accelerate by using GPU, this is currently not implemented yet.')
         ref = wav.mean(0)
         wav = (wav - ref.mean()) / ref.std()
         sources = apply.apply_model(
@@ -86,6 +86,9 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
         drum=sources[0]
         sample_rate=model.samplerate
         drum_track=librosa.to_mono(drum)
+
+    else:
+        raise ValueError ('only support 2 kernels, "spleeter" OR "demucs"')
 
     return drum_track, sample_rate
 
@@ -105,16 +108,29 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
 
     if fixed_clip_length==False:      
         if estimated_bpm==None:
-            warnings.warn('If fixed_clip_length is False, It is strongly reommended to provide an estimated BPM value, even if it is just a proxy.')
             print('-----------------------------')
-            print('BPM value not set......BPM will be estimated by the default algorithm, which may not be reliable in some cases.')
+            print('BPM value not set......BPM will be estimated by the time difference between each detected drum hit, which may not be reliable in some cases.')
             print('Please note that inaccurate BPM could lead to miscalculation of note duration and poor model performancce.')
+        if resolution==None:
+            print('-----------------------------')
+            print(f'resolution = {resolution}. ')
+            print(f'The resolution will use the 10% quantile value of all time differences between each detected drum hit')
+            print('-----------------------------')
+        elif resolution>0:
+            print('-----------------------------')
+            print(f'resolution = {resolution}. ')
+            print(f'{resolution} note duration is set, this means each of the sliced audio clip length will have the same duration as an {resolution} note in the song')
+            print('It is recommended to set the resolution parameter to None, if not familiar with the song structure')
+            print('-----------------------------')
+        elif resolution<0:
+            print('-----------------------------')
+            print(f'resolution = {resolution} seconds. ')
+            print(f'{resolution} seconds duration is set, this means each of the sliced audio clip length will be {resolution} seconds long')
+            print('It is recommended to set the resolution parameter to None, if not familiar with the song structure')
+            print('-----------------------------')
+        else:
+            raise ValueError ('Resolution parameter is not set properly. The value should be either note duration (by setting it between 4/8/16/32) or second (only accept the value <1 second). Please set to None if not familiar with the song structure')
 
-        print('-----------------------------')
-        print(f'resolution = {resolution}. ')
-        print(f'{resolution} note duration is set, this means the duration of the sliced audio clip will have the same duration as an {resolution} note in the song')
-        print('It is recommended to set the resolution value either 8 or 16, if not familiar with song structure')
-        print('-----------------------------')
     
     if type(drum_track)!=np.ndarray:
         drum_track, sample_rate=librosa.load(drum_track, sr=None)
@@ -122,7 +138,6 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
     o_env = librosa.onset.onset_strength(drum_track, sr=sample_rate, hop_length=hop_length)
     onset_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate, backtrack=backtrack)
     peak_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate)
-    onset_times=librosa.frames_to_time(onset_frames, sr=sample_rate, )
     onset_samples = librosa.frames_to_samples(onset_frames*(hop_length/512))
     peak_samples = librosa.frames_to_samples(peak_frames*(hop_length/512))
     
@@ -134,12 +149,14 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
         estimated_bpm=60/(librosa.samples_to_time(_8_duration, sr=sample_rate)*2)
     bpm=librosa.beat.tempo(drum_track, sr=sample_rate, start_bpm=estimated_bpm)[0]
 
+    print(f'Estimated BPM value: {bpm}')
+
     if bpm>110:
+        print('Detected BPM value is larger than 110, re-calibrate the hop-length to 512 for more accurate result')
         hop_length=512
         o_env = librosa.onset.onset_strength(drum_track, sr=sample_rate, hop_length=hop_length)
         onset_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate, backtrack=backtrack)
         peak_frames=librosa.onset.onset_detect(drum_track, onset_envelope=o_env, sr=sample_rate)
-        onset_times=librosa.frames_to_time(onset_frames, sr=sample_rate, )
         onset_samples = librosa.frames_to_samples(onset_frames*(hop_length/512))
         peak_samples = librosa.frames_to_samples(peak_frames*(hop_length/512))
         
@@ -166,8 +183,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
         window_size=librosa.time_to_samples(thirty_second_note_duration, sr=sample_rate)
     elif resolution<1:
         window_size=librosa.time_to_samples(resolution, sr=sample_rate)
-    else:
-        raise ValueError ('Resolution parameter is not properly set. The value should be either note duration (by setting it between 4/8/16/32) or specifying the resolution by second (only accept the value <1 second)')
+
     
     if fixed_clip_length==True:
         window_size=librosa.time_to_samples(0.18, sr=sample_rate)
