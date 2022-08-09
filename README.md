@@ -20,6 +20,57 @@ Note that if you wish to use the Python `Spleeter` library for audio data prepar
 <img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.jpg" 
      alt="Annoteators Flow Diagram" width="740">
 
+For a more detailed explanation of each step, please visit our blog post here
+
+# How to start?
+
+There are a few ways to install and use this package
+
+## Interactive Web App
+- tbd
+
+## Run from local computer
+First download this repo or git clone this repo to your local computer
+
+'''
+# please make sure you already have Github CLI installed
+gh repo clone cb-42/siads_697_capstone_annoteators
+# navigate to the root directory and install the necessary packages
+pip install -r requirements.txt
+'''
+
+Below is a quick demo code of tranascribing a song to drum sheet music
+'''python
+# import packages
+from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
+from inference.transcriber import drum_transcriber
+
+#If you want to use the audio from a Youtube video...
+path = get_yt_audio("Youtube link of your choice") 
+
+#Or specify the file path to the audio file in your compauter
+path = "the path to the audio file in your compauter"
+
+#Extract drum track from the Audio File / Youtube Audio
+drum_track, sample_rate=drum_extraction(path, kernel='demucs') #Recommend to use demucs kernel. For more information about the kernel choise, please check help(drum_extraction).
+
+#Create dataframe for prediction task
+df, bpm=drum_to_frame(drum_track, sample_rate) #specifying a few parameters here would help boosting prediction accuracy. For more information about the parameter details, please check help(drum_to_frame).
+
+#Serv to add prediction step here
+
+#The output prediction labels and relevant meta info will be used to construct the sheet music
+song_duration = librosa.get_duration(drum_track, sr=sample_rate)
+sheet_music = drum_transcriber(prediction_df, song_duration, bpm, sample_rate)
+
+#If you are in the notebook enviornment, you can render the sheet music directly in the notebook.
+#To render or export sheet music in pdf format, [Musescore3 software](https://musescore.org/en/download) need to be installed beforehand.   
+sheet_music.sheet.show('text') #display the MusicXML file in text format
+sheet_music.sheet.show() #display the sheet music directly in the notebook
+
+sheet_music.sheet.write() #export the sheet music in MusicXML format
+sheet_music.sheet.write(fmt='musicxml.pdf') #export the sheet music in pdf
+'''
 
 # Pre-trained Model
 The pre-trained model is a convolutional neural network (ConvNet) model that trained on the Expanded Groove MIDI Dataset (E-GMD) from Google Magenta project.
