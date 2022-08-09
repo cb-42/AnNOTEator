@@ -26,21 +26,21 @@ For a more detailed explanation of each step, please visit our blog post here
 
 There are a few ways to install and use this package
 
-## Interactive Web App
+### Interactive Web App
 - tbd
 
-## Run from local computer
+### Run from local computer
 First download this repo or git clone this repo to your local computer
 
-'''
+```bash
 #please make sure you already have Github CLI installed
 gh repo clone cb-42/siads_697_capstone_annoteators
 #navigate to the root directory and install the necessary packages
 pip install -r requirements.txt
-'''
+```
 
 Below is a quick demo code of tranascribing a song to drum sheet music
-'''python
+```python
 #import packages
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
 from inference.transcriber import drum_transcriber
@@ -64,13 +64,13 @@ song_duration = librosa.get_duration(drum_track, sr=sample_rate)
 sheet_music = drum_transcriber(prediction_df, song_duration, bpm, sample_rate)
 
 #If you are in the notebook enviornment, you can render the sheet music directly in the notebook.
-#To render or export sheet music in pdf format, [Musescore3 software](https://musescore.org/en/download) need to be installed beforehand.   
+#To render or export sheet music in pdf format, Musescore3 software(https://musescore.org/en/download) need to be installed beforehand.   
 sheet_music.sheet.show('text') #display the MusicXML file in text format
 sheet_music.sheet.show() #display the sheet music directly in the notebook
 
 sheet_music.sheet.write() #export the sheet music in MusicXML format
 sheet_music.sheet.write(fmt='musicxml.pdf') #export the sheet music in pdf
-'''
+```
 
 # Pre-trained Model
 The pre-trained model is a convolutional neural network (ConvNet) model that trained on the Expanded Groove MIDI Dataset (E-GMD) from Google Magenta project.
