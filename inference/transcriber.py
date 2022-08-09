@@ -233,7 +233,7 @@ class drum_transcriber():
         """
         A function to reformat the prediction result in a format that can pass to the build_stream step to build all the required data for sheet music construction step
         """
-        pitch_mapping=self.df.loc[:, 'peak_sample':'CC'].set_index('peak_sample')
+        pitch_mapping=self.df[['peak_sample','SD','HH', 'KD', 'RC', 'TT', 'CC']].set_index('peak_sample')
         pitch_mapping=pitch_mapping.to_dict(orient='index')
         pitch_dict={}
         for p in pitch_mapping.keys():

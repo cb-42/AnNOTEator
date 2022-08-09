@@ -7,6 +7,7 @@ import numpy as np
 from demucs import pretrained, apply, audio
 from pathlib import Path
 import multiprocessing
+from pedalboard import Pedalboard, Compressor
 
 def drum_extraction(path, kernel, drum_start=None, drum_end=None):
     """
@@ -93,14 +94,14 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
 
     return drum_track, sample_rate
 
-def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, fixed_clip_length=False, hop_length=1024, backtrack=False):
+def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fixed_clip_length=False, hop_length=1024, backtrack=False):
 
     """
     This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
     :param drum_track (numpy array):    The extracted drum track
     :param sample_rate (int):           The sampling rate of the drum track
     :param estimated_bpm (int):         Beat per minute. it is best to provide a estimated bpm to improve the bpm detection accuracy
-    :param resolution (int):            Either 8/16/32. default 8. control the window size of the onset sound clip if "fixed_clip_length" is not set. 8 means the window size equal to the 8th note duration (calculated by the bpm value), etc.
+    :param resolution (int):            Either 8/16/32. default 16. control the window size of the onset sound clip if "fixed_clip_length" is not set. 8 means the window size equal to the 8th note duration (calculated by the bpm value), etc.
     :param fixed_clip_length (bool):    Default True. set window_size of the clip to 0.2 seconds as default, override resolution setting if set to True.
     :param hop_length (int) :           Default 1024. 1024 should work in most cases, this value will be auto adjusted to 512 if the song is really fast (>110 bpm)
     :param backtrack (bool) :           Default False. if True, the detected onset position will roll back to the previous local minima to capture the full sound. However, after a few testing, this does not work well for drum sound. Only turn this on in special cases!
@@ -117,7 +118,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
         if resolution==None:
             print('-----------------------------')
             print(f'resolution = {resolution}. ')
-            print(f'The resolution will use the 10% quantile value of all time differences between each detected drum hit')
+            print(f'The resolution will use the 25% quantile value of all time differences between each detected drum hit')
             print('-----------------------------')
         elif resolution>0:
             print('-----------------------------')
@@ -215,6 +216,8 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
     df[['audio_clip', 'sampling_rate']]=df.apply(
             lambda x:resampling(x, 8820) if len(x['audio_clip'])!=8820 else pd.Series([x['audio_clip'], x['sampling_rate']]) , axis=1)
 
+    pb = Pedalboard([Compressor(threshold_db=-27, ratio=4,attack_ms=1,release_ms=200)])
+    df['audio_clip']=df.audio_clip.apply(lambda x:pb(x, sample_rate))
 
     return df, bpm
 
