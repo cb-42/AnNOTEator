@@ -33,15 +33,15 @@ There are a few ways to install and use this package
 First download this repo or git clone this repo to your local computer
 
 '''
-# please make sure you already have Github CLI installed
+#please make sure you already have Github CLI installed
 gh repo clone cb-42/siads_697_capstone_annoteators
-# navigate to the root directory and install the necessary packages
+#navigate to the root directory and install the necessary packages
 pip install -r requirements.txt
 '''
 
 Below is a quick demo code of tranascribing a song to drum sheet music
 '''python
-# import packages
+#import packages
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
 from inference.transcriber import drum_transcriber
 
