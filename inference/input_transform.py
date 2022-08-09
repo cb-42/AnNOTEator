@@ -56,10 +56,10 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
         drum_track=librosa.to_mono(prediction["drums"].T)
 
     elif kernel=='demucs':
-        model_1=pretrained.get_model(name='14fc6a69', repo=Path('..\pretrained_models\demucs'))
-        model_2=pretrained.get_model(name='464b36d7', repo=Path('..\pretrained_models\demucs'))
-        model_3=pretrained.get_model(name='7fd6ef75', repo=Path('..\pretrained_models\demucs'))
-        model_4=pretrained.get_model(name='83fc094f', repo=Path('..\pretrained_models\demucs'))
+        model_1=pretrained.get_model(name='14fc6a69', repo=Path('pretrained_models\demucs'))
+        model_2=pretrained.get_model(name='464b36d7', repo=Path('pretrained_models\demucs'))
+        model_3=pretrained.get_model(name='7fd6ef75', repo=Path('pretrained_models\demucs'))
+        model_4=pretrained.get_model(name='83fc094f', repo=Path('pretrained_models\demucs'))
         model=apply.BagOfModels([model_1,model_2,model_3,model_4])
         print('The demucs kernel is a bag of 4 models. The track will be processed 4 times and output the best one. You will see 4 progress bars per track.')
         wav=audio.AudioFile(path).read(
