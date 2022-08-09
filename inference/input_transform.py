@@ -170,8 +170,8 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
     thirty_second_note_duration=60/bpm/8
     
     if backtrack==False:
-#        padding=librosa.time_to_samples(thirty_second_note_duration/2/2, sr=sample_rate)
-        padding=librosa.time_to_samples(0.02, sr=sample_rate)
+        padding=librosa.time_to_samples(thirty_second_note_duration/2/2, sr=sample_rate)
+#        padding=librosa.time_to_samples(0.02, sr=sample_rate)
     else:
         pass
     
