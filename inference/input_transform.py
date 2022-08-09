@@ -11,12 +11,13 @@ import multiprocessing
 def drum_extraction(path, kernel, drum_start=None, drum_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
-    :param path (str): the path to the audio file
-    :param kernel (str): 'spleeter' or 'demucs'. spleeter run faster but lower quality, demcus run slower but higher quality.  
-    :param music_start (int): the start of the music in the file (in seconds). If not set, assume to start at the begining of the track
-    :param music_end (int): the end of the music in the file (in seconds). If not set, assume to end at the end of the track
+    :param path (str):          the path to the audio file
+    :param kernel (str):        'spleeter' or 'demucs'. spleeter run faster but lower quality, demucs run slower but higher quality. Always recommend to use demucs as it produce a much better quality. 
+                                Please note that the demucs kernel could take 4-6 mins to process a song depends on the capability of your machine and the length of the audio
+    :param music_start (int):   the start of the music in the file (in seconds). Shorter audio will reduce the processing time significantly. If not set, assume to start at the begining of the track
+    :param music_end (int):     the end of the music in the file (in seconds). Shorter audio will reduce the processing time significantly. If not set, assume to end at the end of the track
 
-    :return drum_tracck (numpt array): the extracted drum track
+    :return drum_track (numpy array): the extracted drum track
     :return sample_rate (int): the sampling rate of the extracted drum track
     """
 
@@ -96,11 +97,13 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=None, 
 
     """
     This is a function to detect and extract onset from a drum track and format the onsets into a df for prediction task 
-    :param drum_track (numpy array): the extracted drum track
-    :param sample_rate (int): the sampling rate of the drum track
-    :param estimated_bpm (int): beat per minute. it is best to provide a estimated bpm to improve the bpm detection accuracy
-    :param resolution (int): either 8/16/32. default 8. control the window size of the onset sound clip if "fixed_clip_length" is not set. 8 means the window size equal to the 8th note duration (calculated by the bpm value), etc.
-    :param fixed_clip_length (bool): default True. set window_size of the clip to 0.2 seconds as default, override resolution setting if set to True.
+    :param drum_track (numpy array):    The extracted drum track
+    :param sample_rate (int):           The sampling rate of the drum track
+    :param estimated_bpm (int):         Beat per minute. it is best to provide a estimated bpm to improve the bpm detection accuracy
+    :param resolution (int):            Either 8/16/32. default 8. control the window size of the onset sound clip if "fixed_clip_length" is not set. 8 means the window size equal to the 8th note duration (calculated by the bpm value), etc.
+    :param fixed_clip_length (bool):    Default True. set window_size of the clip to 0.2 seconds as default, override resolution setting if set to True.
+    :param hop_length (int) :           Default 1024. 1024 should work in most cases, this value will be auto adjusted to 512 if the song is really fast (>110 bpm)
+    :param backtrack (bool) :           Default False. if True, the detected onset position will roll back to the previous local minima to capture the full sound. However, after a few testing, this does not work well for drum sound. Only turn this on in special cases!
 
     :return df (pd dataframe): the dataframe that contains the information of all onset found in the track
     :return bpm (float): the estimated bpm value
