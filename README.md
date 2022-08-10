@@ -29,7 +29,10 @@ There are a few ways to install and use this package
 ### Interactive Web App
 - tbd
 
-### CLI (Command Line Interface)
+### Docker image
+- Chris to add
+
+### Command Line Interface
 
 ```bash
 #please make sure you already have Github CLI installed
@@ -44,7 +47,7 @@ python main.py -i 'https://www.youtube.com/watch?v=hTWKbfoikeg' -o 'pdf'
 
 ```
 
-### Run from local computer
+### Notebook Enviornment
 First download this repo or git clone this repo to your local computer
 
 ```bash
@@ -95,17 +98,21 @@ sheet_music.sheet.write(fmt='musicxml.pdf') # export the sheet music in pdf
 
 ```
 
-# Pre-trained Model
-The pre-trained model is a convolutional neural network (ConvNet) model that trained on the Expanded Groove MIDI Dataset (E-GMD) from Google Magenta project.
+# Custom training and pre-trained Model (For Data Scientist)
+We have ploaded a pre-trained model in the <folder>, which is used in the prediction by default. The pre-trained model is a convolutional neural network (ConvNet) model that trained on the Expanded Groove MIDI Dataset (E-GMD) from Google Magenta project. We also provided all the nessesary tooling if you wish to replicate / modify the training pipeline.  
 
 ## Source data  
 This project used The Expanded Groove MIDI Dataset (E-GMD) for model development. E-GMD Dataset is a large dataset of human drum performances, with audio recordings annotated in MIDI. E-GMD contains 444 hours of audio from 43 drum kits and is an order of magnitude larger than similar datasets. It is also the first human-performed drum transcription dataset with annotations of velocity.
 
 The E-GMD dataset was developed by a group of Google Researchers. For more information about the dataset, please visit their site: [The Expanded Groove MIDI Dataset](https://magenta.tensorflow.org/datasets/e-gmd).
 ## Data Processing
+<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/data_preparation.jpg" 
+     alt="Data Processing Diagram" width="740">
+
 - Each drum track record in the dataset consist of 2 files - a MIDI file and a WAV audio file. The MIDI file and WAV file were synced to within 2ms time differences
-- The WAV audio was slicied into a series of mini audio clips with the relevant label captured from the MIDI messages
+- The WAV audio was slicied into a series of mini audio clips with the relevant label captured from the MIDI messages. 
 - Each audio clip represent a sound of a single drum hit
+- Please refer to the data_preparation script for more details. We also prepared a notebook file to showcase how to process the data.
 
 ## Data Augmentation
 - 
