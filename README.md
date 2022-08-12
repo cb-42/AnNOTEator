@@ -10,7 +10,7 @@ Note that if you wish to use the Python `Spleeter` library for audio data prepar
 
 
 # Introduction
-Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician need to transcribe it themselves. The AnNOTEators project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the piepline and framework in the [How this works](https://github.com/cb-42/siads_697_capstone_annoteators#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
+Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician need to transcribe it themselves. The AnNOTEators project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How this works](https://github.com/cb-42/siads_697_capstone_annoteators#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
 
 It is important to check out the [Known issues and limitations](https://github.com/cb-42/siads_697_capstone_annoteators#known-issues-and-limitations) sections for more information about factors to be aware of when using this package.
 
@@ -18,8 +18,7 @@ To learn more about the technical details of this project, please visit our [blo
 
 # How does this work?
 
-<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/Flow_diagram.jpg" 
-     alt="Annoteators Flow Diagram" width="740">
+<img src="img/Flow_diagram.jpg" alt="Annoteators Flow Diagram" width="740">
 
 For a more detailed explanation of each step, please visit our [blog post]. **Attach link later**
 
@@ -115,8 +114,7 @@ This project used The Expanded Groove MIDI Dataset (E-GMD) for model development
 
 The E-GMD dataset was developed by a group of Google Researchers. For more information about the dataset, please visit their site: [The Expanded Groove MIDI Dataset](https://magenta.tensorflow.org/datasets/e-gmd).
 ## How were the data processed for model training? 
-<img src="https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/data_preparation.jpg" 
-     alt="Data Processing Diagram" width="740">
+<img src="img/data_preparation.jpg" alt="Data Processing Diagram" width="740">
 
 - Each drum track record in the dataset consist of 2 files - a MIDI file and a WAV audio file. The MIDI file and WAV file were synced to within 2ms time differences
 - The WAV audio was sliced into a series of mini audio clips with the relevant label captured from the MIDI messages. 
