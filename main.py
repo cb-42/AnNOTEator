@@ -1,5 +1,6 @@
 import argparse
 from os import path
+import os
 
 def main():
     parser = argparse.ArgumentParser(description="Transcribe the drum part of a given song", usage=None)
@@ -20,15 +21,12 @@ def main():
                         type=str,
                         help='Kernel option to demix music')
 
-    parser.add_argument('-ds', '--drum_start',
-                        default=None,
-                        type=int,
-                        help='The start time (in seconds) of the drumplay in the song')
-
-    parser.add_argument('-de', '--drum_end',
-                        default=None,
-                        type=int,
-                        help='The end time (in seconds) of the drumplay in the song')
+    parser.add_argument('-km', '--kernel_mode',
+                        choices=['performance', 'speed'],
+                        type=str,
+                        required=True,
+                        help="The processing mode of the kernel, either speed or performance. "
+                                "Speed mode is 4 times faster than performance mode but quality could be slightly worse")
 
     parser.add_argument('-bpm',
                         default=None,
@@ -39,16 +37,6 @@ def main():
                         default=16,
                         choices=[None, 4,8,16,32],
                         help='Control the window size (total length) of the onset sound clip extract from the song')
-
-    parser.add_argument('-bt', '--backtrack',
-                        default=False,
-                        type=bool,
-                        help='Roll back the detected onset to the previous local minima')
-
-    parser.add_argument('-fcl', '--fix_clip_length',
-                        default=False,
-                        type=bool,
-                        help='Fix the clip length to 0.2 seconds')
 
     parser.add_argument('-b', '--beat',
                         type=int,
@@ -61,17 +49,6 @@ def main():
                         help="The UPPER NUMBER of the song's time signature." 
                                 "This number represent the number of beats in each measure.")
 
-    parser.add_argument('-d', '--output_dir',
-                        type=str,
-                        required=True,
-                        help="The LOWER NUMBER of the song's time signature." 
-                            "This number represent the note value in a measure.")
-
-    parser.add_argument('-f', '--outputfile_name',
-                        type=str,
-                        required=True,
-                        help='The name of the output file')
-
     parser.add_argument('-fmt', '--format',
                         default='pdf',
                         choices=['pdf', 'musicxml'],
@@ -82,21 +59,21 @@ def main():
 
     from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
     from inference.transcriber import drum_transcriber
+    from inference.prediction import predict_drumhit
     import librosa
 
     if args.link!=None:
         print(f'Downloading audio track from {args.link}')
-        path = get_yt_audio(args.link)
-        print(f'Audio track saved to {path}')
+        f_path = get_yt_audio(args.link)
+        print(f'Audio track saved to {f_path}')
     else:
-        path=args.path
+        f_path=args.path
         print(f'Retriving audio track from {args.path}')
     
     print('Start Demixing Process...')
-    drum_track, sample_rate = drum_extraction(path,
+    drum_track, sample_rate = drum_extraction(f_path,
                                               kernel=args.kernal,
-                                              drum_start=args.drum_start,
-                                              drum_end=args.drum_end)
+                                              mode=args.kernel_mode)
 
     print('Drum track extracted')
 
@@ -104,29 +81,28 @@ def main():
     df, bpm = drum_to_frame(drum_track,
                             sample_rate,
                             estimated_bpm=args.bpm,
-                            resolution=args.resolution,
-                            backtrack=args.backtrack,
-                            fixed_clip_length=args.fix_xlip_length)
+                            resolution=args.resolution)
 
-    
-    song_duration = librosa.get_duration(drum_track, sr=sample_rate)
+    df_pred=predict_drumhit('inference/pretrained_models/annoteators/complete_network.h5', df)
 
     print('Creating sheet music...')
-    sheet_music = drum_transcriber(df,
+
+    song_duration = librosa.get_duration(drum_track, sr=sample_rate)
+
+    sheet_music = drum_transcriber(df_pred,
                                     song_duration,
                                     bpm,
                                     sample_rate,
                                     beats_in_measure=args.beat,
                                     note_value=args.note)
     
-    if args.fmt=='pdf':
-        filepath = path.join(args.output_dir, f'{args.outputfile_name}.pdf')
-        sheet_music.sheet.write(fmt='musicxml.pdf', fp=filepath)
-        print(f'Sheet music saved at {filepath}')
+    if args.format=='pdf':
+        out_path=sheet_music.sheet.write(fmt='musicxml.pdf')
+        print(f'Sheet music saved at {out_path}')
     else:
-        filepath = path.join(args.output_dir, f'{args.outputfile_name}.mxml')
-        sheet_music.sheet.write(fp=filepath)
-        print(f'Sheet music saved at {filepath}')
-
+        out_path= sheet_music.sheet.write()
+        print(f'Sheet music saved at {out_path}')
+    if args.link!=None:
+        os.remove(f_path)
 if __name__ == "__main__":
     main()
