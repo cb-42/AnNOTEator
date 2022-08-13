@@ -12,4 +12,3 @@ sklearn
 spleeter
 tensorflow
 tqdm
-validators
