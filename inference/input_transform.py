@@ -1,15 +1,12 @@
-from spleeter.audio.adapter import AudioAdapter
-from spleeter.separator import Separator
 import librosa
 import pandas as pd
 from pytube import YouTube
 import numpy as np
-from demucs import pretrained, apply, audio
 from pathlib import Path
 import multiprocessing
 from pedalboard import Pedalboard, Compressor
 
-def drum_extraction(path, kernel, drum_start=None, drum_end=None):
+def drum_extraction(path, kernel='demucs', mode='speed', drum_start=None, drum_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path (str):          the path to the audio file
@@ -29,7 +26,9 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
             raise ValueError('Please specify the music end time (in seconds) of your file / Youtube link')
 
     if kernel=='spleeter':
-    #default to use 4stems pre-train model from the Spleeter package for audio demixing 
+        from spleeter.audio.adapter import AudioAdapter
+        from spleeter.separator import Separator
+        #default to use 4stems pre-train model from the Spleeter package for audio demixing 
         separator = Separator('spleeter:4stems')
 
         audio_adapter = AudioAdapter.default()
@@ -57,12 +56,18 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
         drum_track=librosa.to_mono(prediction["drums"].T)
 
     elif kernel=='demucs':
-        model_1=pretrained.get_model(name='14fc6a69', repo=Path('pretrained_models\demucs'))
-        model_2=pretrained.get_model(name='464b36d7', repo=Path('pretrained_models\demucs'))
-        model_3=pretrained.get_model(name='7fd6ef75', repo=Path('pretrained_models\demucs'))
-        model_4=pretrained.get_model(name='83fc094f', repo=Path('pretrained_models\demucs'))
-        model=apply.BagOfModels([model_1,model_2,model_3,model_4])
-        print('The demucs kernel is a bag of 4 models. The track will be processed 4 times and output the best one. You will see 4 progress bars per track.')
+        from demucs import pretrained, apply, audio
+        if mode =='speed':
+            model=pretrained.get_model(name='83fc094f', repo=Path('inference\pretrained_models\demucs'))
+            model=apply.BagOfModels([model])
+            print('The precessing time could take 1-2 mins.')
+        elif mode =='performance':
+            model_1=pretrained.get_model(name='14fc6a69', repo=Path('inference\pretrained_models\demucs'))
+            model_2=pretrained.get_model(name='464b36d7', repo=Path('inference\pretrained_models\demucs'))
+            model_3=pretrained.get_model(name='7fd6ef75', repo=Path('inference\pretrained_models\demucs'))
+            model_4=pretrained.get_model(name='83fc094f', repo=Path('inference\pretrained_models\demucs'))
+            model=apply.BagOfModels([model_1,model_2,model_3,model_4])
+            print('The demucs kernel is a bag of 4 models. The track will be processed 4 times and output the best one. You will see 4 progress bars per track. The total processing time could take 4-6 mins depends on total Audio length')
         wav=audio.AudioFile(path).read(
             streams=0,
             samplerate=model.samplerate,
@@ -71,7 +76,7 @@ def drum_extraction(path, kernel, drum_start=None, drum_end=None):
             duration=drum_end-drum_start if drum_end is not None else None
             )
 
-        print('The task will use all your available CPU cores by default. Although it is possible to accelerate by using GPU, this is currently not implemented yet.')
+        #The task will use all your available CPU cores by default. Although it is possible to accelerate by using GPU, this is currently not implemented yet.
         ref = wav.mean(0)
         wav = (wav - ref.mean()) / ref.std()
         sources = apply.apply_model(
@@ -220,7 +225,6 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
     df['audio_clip']=df.audio_clip.apply(lambda x:pb(x, sample_rate))
 
     return df, bpm
-
 
 def get_yt_audio(link):
     yt = YouTube(link)
