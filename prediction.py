@@ -10,14 +10,14 @@ def predict_drumhit(network,yt_link=True,path=None,est_bpm=None)
   '''
   parameter network: path to the trained keras network
   parameter yt_link: boolean, extracting music from youtube link or not
-  parameter path: if yt_link = True, input the youtube link here; else, input the local audio filepath
-  parameter est_bpm: the estimated bpm for the music
+  parameter path: if yt_link = True, input the youtube link; else, input the local audio filepath
+  parameter est_bpm: the estimated bpm for the music, used in drum_to_frame function
 
   Examples: 
-  yt_music_usage : predict_drumhit('Trained Network/trained_network_path', yt_link=True,
-                                   path = 'https://www.youtube.com/watch?v=Y7ix6RITXM0',est_bpm=110)
-  local_input_usage : predict_drumhit('Trained Network/trained_network_path', yt_link=False, 
-                                      path = 'content/drums.wav',est_bpm=96)
+  youtube music input usage : predict_drumhit('trained_network_path', yt_link=True,
+                                               path = 'youtube_link', est_bpm=110)
+  local musicfile input usage : predict_drumhit('trained_network_path', yt_link=False, 
+                                                 path = 'content/music.mp3', est_bpm=96)
   '''
 
   model = keras.models.load_model(network)
@@ -27,7 +27,7 @@ def predict_drumhit(network,yt_link=True,path=None,est_bpm=None)
     drum_track, sr = drum_extraction(path, kernel='demucs')
 
   else :
-    drum_track, sr = librosa.load(path)
+    drum_track, sr = drum_extraction(path, kernel='demucs')
 
   df, bpm=drum_to_frame(drum_track,sample_rate=sr,
             hop_length=1024,
@@ -40,7 +40,7 @@ def predict_drumhit(network,yt_link=True,path=None,est_bpm=None)
 
   for i in range(df.shape[0]):
     pred_x.append(librosa.feature.melspectrogram(y=df.audio_clip.iloc[i], 
-                          sr=df.sampling_rate.iloc[i], n_mels=128, fmax=8000))
+                                                 sr=df.sampling_rate.iloc[i], n_mels=128, fmax=8000))
 
   X = np.array(pred_x)
   X = X.reshape(X.shape[0],X.shape[1],X.shape[2],1)
