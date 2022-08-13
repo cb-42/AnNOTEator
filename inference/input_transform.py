@@ -6,7 +6,7 @@ from pathlib import Path
 import multiprocessing
 from pedalboard import Pedalboard, Compressor
 
-def drum_extraction(path, kernel='demucs', mode='speed', drum_start=None, drum_end=None):
+def drum_extraction(path, dir=None, kernel='demucs', mode='speed', drum_start=None, drum_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path (str):          the path to the audio file
@@ -57,15 +57,19 @@ def drum_extraction(path, kernel='demucs', mode='speed', drum_start=None, drum_e
 
     elif kernel=='demucs':
         from demucs import pretrained, apply, audio
+        if dir!=None:
+            dir_path=dir
+        else:
+            dir_path='inference\pretrained_models\demucs'
         if mode =='speed':
-            model=pretrained.get_model(name='83fc094f', repo=Path('inference\pretrained_models\demucs'))
+            model=pretrained.get_model(name='83fc094f', repo=Path(dir_path))
             model=apply.BagOfModels([model])
             print('The precessing time could take 1-2 mins.')
         elif mode =='performance':
-            model_1=pretrained.get_model(name='14fc6a69', repo=Path('inference\pretrained_models\demucs'))
-            model_2=pretrained.get_model(name='464b36d7', repo=Path('inference\pretrained_models\demucs'))
-            model_3=pretrained.get_model(name='7fd6ef75', repo=Path('inference\pretrained_models\demucs'))
-            model_4=pretrained.get_model(name='83fc094f', repo=Path('inference\pretrained_models\demucs'))
+            model_1=pretrained.get_model(name='14fc6a69', repo=Path(dir_path))
+            model_2=pretrained.get_model(name='464b36d7', repo=Path(dir_path))
+            model_3=pretrained.get_model(name='7fd6ef75', repo=Path(dir_path))
+            model_4=pretrained.get_model(name='83fc094f', repo=Path(dir_path))
             model=apply.BagOfModels([model_1,model_2,model_3,model_4])
             print('The demucs kernel is a bag of 4 models. The track will be processed 4 times and output the best one. You will see 4 progress bars per track. The total processing time could take 4-6 mins depends on total Audio length')
         wav=audio.AudioFile(path).read(
@@ -159,7 +163,6 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
     bpm=librosa.beat.tempo(drum_track, sr=sample_rate, start_bpm=estimated_bpm)[0]
 
     print(f'Estimated BPM value: {bpm}')
-
     if bpm>110:
         print('Detected BPM value is larger than 110, re-calibrate the hop-length to 512 for more accurate result')
         hop_length=512
