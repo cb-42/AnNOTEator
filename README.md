@@ -31,7 +31,7 @@ There are a few ways to install and use the code, models, and environments we've
 
 ### Docker image
 
-Docker images for the model training and the audio inference environments can be acquired from our [Docker Hub repository](https://hub.docker.com/r/cbrown42/annoteators_project). These come with necessary Python libraries and other software (like MuseScore) pre-installed.
+Docker images for the model training and the audio inference environments can be acquired from our [Docker Hub repository](https://hub.docker.com/r/cbrown42/annoteators_project). These come with necessary Python libraries and other software pre-installed, such as MuseScore which is necessary for notation. You may wish to check out [getting started with Docker](https://docs.docker.com/get-started/#prepare-your-docker-environment) to learn more about set up.
 
 For example, to pull the inference image, use the following command:  
 
@@ -65,7 +65,7 @@ gh repo clone cb-42/siads_697_capstone_annoteators
 pip install -r requirements.txt
 ```
 
-Below is a quick demo code of tranascribing a song to drum sheet music
+Below is a quick demo code of transcribing a song to drum sheet music
 ```python
 
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
@@ -106,13 +106,14 @@ sheet_music.sheet.write(fmt='musicxml.pdf') # export the sheet music in pdf
 
 ```
 
-# Custom training and pre-trained Model (For Data Scientists)
-We have uploaded a pre-trained model in the <folder>, which is used in the prediction by default. The pre-trained model is a convolutional neural network (ConvNet) model that trained on the Expanded Groove MIDI Dataset (E-GMD) from the Google Magenta project. We also provided all the nessesary tooling for anyone that wishes to replicate or modify the training pipeline.  
+# Custom training and pre-trained models (for Data Scientists)
+We have uploaded various pre-trained models in the [pretrained_models folder](https://github.com/cb-42/siads_697_capstone_annoteators/tree/main/inference/pretrained_models/annoteators), differing primarily by augmentation strategy. The unaugmented base model is used in prediction by default. Each pre-trained model is a convolutional neural network (ConvNet) model that trained on the Expanded Groove MIDI Dataset (E-GMD) from the Google Magenta project. We also provided all the nessesary tooling for anyone that wishes to replicate or modify the training pipeline.  
 
 ## Source data  
 This project used The Expanded Groove MIDI Dataset (E-GMD) for model development. E-GMD Dataset is a large dataset of human drum performances, with audio recordings annotated in MIDI. E-GMD contains 444 hours of audio from 43 drum kits and is an order of magnitude larger than similar datasets. It is also the first human-performed drum transcription dataset with annotations of velocity.
 
 The E-GMD dataset was developed by a group of Google Researchers. For more information about the dataset, please visit their site: [The Expanded Groove MIDI Dataset](https://magenta.tensorflow.org/datasets/e-gmd).
+
 ## How were the data processed for model training? 
 <img src="img/data_preparation.jpg" alt="Data Processing Diagram" width="740">
 
@@ -122,7 +123,9 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 - Please refer to the `data_preparation.py` script for more details. We also prepared a notebook to showcase how data preparation elements work and connect together.
 
 ## Data Augmentation
-- Augmentation is not recommended for model development.
+Audio data augmentation can be applied to signals in the waveform or spectrogram domains, or both. We made several augmentation functions available in `augment_audio.py` and for convenienced these are also wrapped into the data preparation pipeline. We primarily explored and tested audio augmentations in the waveform space, though the base model trained on unaugmented audio ultimately performed best. Thus, we do not recommend augmentation for model development in this workflow.  
+  
+Augmentation can also be performed on the audio input used for inference. Depending on the kernel used for input signal preparation, we found that adding compression after processing resulted in better predictions. For more information, please see our [blog post]. **Attach link later**
 
 ## Model Architecture
 - Serv to add
@@ -130,21 +133,37 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 ## Evaluation
 - Serv to add
 
-# Additional Resources
-- tbd
-
 # Known issues and limitations
 - The model has a poor performance in predicting multi-hit labels due to the lack of multi-hit labeled data in the training set. This could be fixed by modifying the data preparation algorithm.
 - The quantization and time mapping algorithm may not be 100% accurate all the time. This approach is also very sensitive to the 'exact time' of each hit in the track. A slight delay (which always happens in human performed drumplay) sometimes could make the note duration detection go wrong. For example, a triplet note could be detected as a 16th note, due to a very little delay. A hidden markov chain model could be a solution to fix this problem - please visit our blog post for a deeper dive discussion on this.
 - There is no standard style in writing drum sheet music. This project implemented a style of our choice, which may not suit everyone's styling preference. To change the notation style, it is necessary to modify the code in the transcriber script. This package uses the `Music21` package for sheet music construction.
 - The standalone drum track demixed by `demucs` is not an original drum track. Some audio features could be altered or lost entirely during the demixing process. It is a known issue that the `demucs` processed drum track has a 'much cleaner signal' than the training drum track, which caused the prediction accuracy issue we observed. Please visit our blog post for a deeper dive and discussion about this, as well as the proposed methodology to fix this issue. 
 
-# Reference
-This software uses the following open source packages:
+# Future plans
+- tbd
+    
+# Additional Resources
+- tbd (relevant guides, tutorials, etc)
 
+# References
+    
+## Software  
+Our code uses the following open source packages and software:
+
+**Python packages:**
 - [Demucs](https://github.com/facebookresearch/demucs)
 - [Librosa](https://github.com/librosa/librosa)
 - [Mido](https://github.com/mido/mido/)
 - [Music21](https://github.com/cuthbertLab/music21)
 - [Pedalboard](https://github.com/spotify/pedalboard)
 - [Spleeter](https://github.com/deezer/spleeter)
+- [TensorFlow](https://github.com/tensorflow/tensorflow)    
+    
+**Notation software:**
+- [MuseScore](https://musescore.org/en)
+    
+## Citations  
+- tbd
+
+# License
+- tbd
