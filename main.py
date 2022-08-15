@@ -83,7 +83,7 @@ def main():
                             estimated_bpm=args.bpm,
                             resolution=args.resolution)
 
-    df_pred=predict_drumhit('inference/pretrained_models/annoteators/complete_network.h5', df)
+    df_pred=predict_drumhit('inference/pretrained_models/annoteators/complete_network.h5', df, sample_rate)
 
     print('Creating sheet music...')
 

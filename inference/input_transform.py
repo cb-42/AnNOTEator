@@ -225,7 +225,7 @@ def drum_to_frame(drum_track, sample_rate, estimated_bpm=None, resolution=16, fi
             lambda x:resampling(x, 8820) if len(x['audio_clip'])!=8820 else pd.Series([x['audio_clip'], x['sampling_rate']]) , axis=1)
 
     pb = Pedalboard([Compressor(threshold_db=-27, ratio=4,attack_ms=1,release_ms=200)])
-    df['audio_clip']=df.audio_clip.apply(lambda x:pb(x, sample_rate))
+    df['audio_clip']=df.apply(lambda x:pb(x.audio_clip, x.sampling_rate), axis=1)
 
     return df, bpm
 

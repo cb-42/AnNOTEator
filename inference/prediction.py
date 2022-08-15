@@ -3,7 +3,7 @@ import numpy as np
 from tensorflow import keras
 import librosa
 
-def predict_drumhit(network,df):
+def predict_drumhit(network,df, song_sampling_rate):
 
   '''
   param network (file path):    Path to the trained keras network
@@ -17,7 +17,7 @@ def predict_drumhit(network,df):
 
   for i in range(df.shape[0]):
     pred_x.append(librosa.feature.melspectrogram(y=df.audio_clip.iloc[i], 
-                                                 sr=df.sampling_rate.iloc[i], n_mels=128, fmax=8000))
+                                                 sr=song_sampling_rate, n_mels=128, fmax=8000))
 
   X = np.array(pred_x)
   X = X.reshape(X.shape[0],X.shape[1],X.shape[2],1)
