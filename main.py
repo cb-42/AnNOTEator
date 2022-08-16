@@ -56,9 +56,15 @@ def main():
                         help='Output sheet music format')
     
     parser.add_argument('-o', '--outpath',
-                        default=None,
+                        default='',
                         type=str,
                         help='Output sheet music path')
+
+    parser.add_argument('-on', '--outputfile_name',
+                        default='Sheet Music',
+                        type=str,
+                        required=True,
+                        help='Output sheet music file name, also serves as the srum sheet title')
 
     args = parser.parse_args()
 
@@ -99,13 +105,14 @@ def main():
                                     bpm,
                                     sample_rate,
                                     beats_in_measure=args.beat,
-                                    note_value=args.note)
+                                    note_value=args.note,
+                                    song_title=args.outputfile_name)
     
     if args.format=='pdf':
-        out_path=sheet_music.sheet.write(fmt='musicxml.pdf', fp=args.outpath)
+        out_path=sheet_music.sheet.write(fmt='musicxml.pdf', fp=os.path.join(args.outpath, args.outputfile_name))
         print(f'Sheet music saved at {out_path}')
     else:
-        out_path= sheet_music.sheet.write(fp=args.outpath)
+        out_path= sheet_music.sheet.write(fp=os.path.join(args.outpath, args.outputfile_name))
         print(f'Sheet music saved at {out_path}')
     if args.link!=None:
         os.remove(f_path)
