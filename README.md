@@ -1,14 +1,6 @@
 # The AnNOTEators Capstone Project
 Greetings! This is our Summer 2022 Capstone Project for the Master of Applied Data Science at the University of Michigan School of Information. Our goal is to predict drum notes from audio to create sheet music. The team consists of Christopher Brown, Stanley Hung, and Severus Chang.  
 
-## Software
-Our requirements.txt file has a list of the Python library dependencies needed to run our Python scripts and Jupyter notebooks. Due to differing version dependencies in the model training and audio inference portions of the workflow, two environments are recommended.
-
-A Docker image for audio input processing for inference can be acquired from the project [Docker Hub repository](https://hub.docker.com/r/cbrown42/annoteators_project). 
-
-Note that if you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as `ffmpeg`, as noted [here](https://pypi.org/project/spleeter/).
-
-
 # Introduction
 Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician need to transcribe it themselves. The AnNOTEators project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How this works](https://github.com/cb-42/siads_697_capstone_annoteators#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
 
@@ -16,11 +8,31 @@ It is important to check out the [Known issues and limitations](https://github.c
 
 To learn more about the technical details of this project, please visit our [blog post]. **Attach link later**
 
+# Software
+Our requirements.txt file has a list of the Python library dependencies needed to run our Python scripts and Jupyter notebooks. Due to differing version dependencies in the model training and audio inference portions of the workflow, two environments are recommended.
+
+A Docker image for audio input processing for inference can be acquired from the project [Docker Hub repository](https://hub.docker.com/r/cbrown42/annoteators_project). 
+
+Note that 
+- if you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as `ffmpeg`, as noted [here](https://pypi.org/project/spleeter/).
+- if you wish to get the pdf output from the pipline, [Musescore software](https://musescore.org/en/download) is required to be installed beforehand
+
+
+
+
 # How does this work?
 
 <img src="img/Flow_diagram.jpg" alt="Annoteators Flow Diagram" width="740">
 
 For a more detailed explanation of each step, please visit our [blog post]. **Attach link later**
+
+# Preparing audio input
+The pipeline accept either local audio file (in various audio formats that supported by ffmpeg) or a Youtube link to the music video of your choice. Please note that...
+
+- The pipeline expect a song that has drum part. 
+- Higher audio input quality yields higher output quality. 
+- Highly recommend using the original version of the song as an input to ensure noiseless signals and a clean signal. Other versions (e.g live performance) is not recommened
+
 
 # Getting Started
 
