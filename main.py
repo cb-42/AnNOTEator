@@ -54,6 +54,11 @@ def main():
                         choices=['pdf', 'musicxml'],
                         type=str,
                         help='Output sheet music format')
+    
+    parser.add_argument('-o', '--outpath',
+                        default=None,
+                        type=str,
+                        help='Output sheet music path')
 
     args = parser.parse_args()
 
@@ -97,10 +102,10 @@ def main():
                                     note_value=args.note)
     
     if args.format=='pdf':
-        out_path=sheet_music.sheet.write(fmt='musicxml.pdf')
+        out_path=sheet_music.sheet.write(fmt='musicxml.pdf', fp=args.outpath)
         print(f'Sheet music saved at {out_path}')
     else:
-        out_path= sheet_music.sheet.write()
+        out_path= sheet_music.sheet.write(fp=args.outpath)
         print(f'Sheet music saved at {out_path}')
     if args.link!=None:
         os.remove(f_path)
