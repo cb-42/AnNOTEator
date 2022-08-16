@@ -6,14 +6,15 @@ from pathlib import Path
 import multiprocessing
 from pedalboard import Pedalboard, Compressor
 
-def drum_extraction(path, dir=None, kernel='demucs', mode='speed', drum_start=None, drum_end=None):
+def drum_extraction(path, dir=None, kernel='demucs', mode='performance', drum_start=None, drum_end=None):
     """
     This is a function to transform the input audio file into a ready-dataframe for prediction task  
     :param path (str):          the path to the audio file
+    :param dir(str):            the path to the demucs model directory
     :param kernel (str):        'spleeter' or 'demucs'. spleeter run faster but lower quality, demucs run slower but higher quality. Always recommend to use demucs as it produce a much better quality. 
                                 Please note that the demucs kernel could take 4-6 mins to process a song depends on the capability of your machine and the length of the audio
-    :param music_start (int):   the start of the music in the file (in seconds). Shorter audio will reduce the processing time significantly. If not set, assume to start at the begining of the track
-    :param music_end (int):     the end of the music in the file (in seconds). Shorter audio will reduce the processing time significantly. If not set, assume to end at the end of the track
+    :param drum_start (int):   the start of the music in the file (in seconds). Shorter audio will reduce the processing time significantly. If not set, assume to start at the begining of the track
+    :param drum_end (int):     the end of the music in the file (in seconds). Shorter audio will reduce the processing time significantly. If not set, assume to end at the end of the track
 
     :return drum_track (numpy array): the extracted drum track
     :return sample_rate (int): the sampling rate of the extracted drum track

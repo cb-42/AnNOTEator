@@ -58,7 +58,7 @@ def main():
     parser.add_argument('-o', '--outpath',
                         default='',
                         type=str,
-                        help='Output sheet music path')
+                        help='Output sheet music directory path')
 
     parser.add_argument('-on', '--outputfile_name',
                         default='Sheet Music',
