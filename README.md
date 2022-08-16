@@ -77,44 +77,39 @@ gh repo clone cb-42/siads_697_capstone_annoteators
 pip install -r requirements.txt
 ```
 
-Below is a quick demo code of transcribing a song to drum sheet music
+Below is a quick demo code of transcribing a song to drum sheet music. Please refer to the `pipeline_demo` notebook (attach link later) for more details about parameters tuning 
 ```python
 
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
+from inference.prediction import predict_drumhit
 from inference.transcriber import drum_transcriber
 
 # If you want to use the audio from a Youtube video...
-# It is recommended to use offical MV / high quality audio as the input.
-# Avoid using live performance versions which could cause unreliable / strange sheet music results.
 path = get_yt_audio("Youtube link of your choice") 
 
 # Or specify the file path to the audio file in your compauter
 path = "the path to the audio file in your compauter"
 
 # Extract drum track from the Audio File / Youtube Audio
-drum_track, sample_rate = drum_extraction(path, kernel='demucs') 
-# We recommend using the demucs kernel. 
-# Please check help(drum_extraction) for further details about the kernels
+drum_track, sample_rate = drum_extraction(path, kernel='demucs', mode='performance') 
 
 # Create dataframe for prediction task
 df, bpm = drum_to_frame(drum_track, sample_rate) 
-# To improve prediction accuracy,
-# Please check help(drum_to_frame) for instruction on fine tuning parameters 
 
-# Serv to add prediction step here
+#predict drum hit
+prediction_df=predict_drumhit('inference/pretrained_models/annoteators/complete_network.h5', df, sample_rate)
 
-# The output prediction labels and relevant meta info will be used to construct the sheet music
+#sheet music construction
 song_duration = librosa.get_duration(drum_track, sr=sample_rate)
 sheet_music = drum_transcriber(prediction_df, song_duration, bpm, sample_rate)
 
-# If you are in the notebook enviornment, you can render the sheet music directly in the notebook.
-# To render or export sheet music in pdf format, 
-# Musescore3 software (https://musescore.org/en/download) needs to be installed beforehand.   
-sheet_music.sheet.show('text') # display the MusicXML file in text format
-sheet_music.sheet.show() # display the sheet music directly in the notebook
+# Display in notebook env
+sheet_music.sheet.show('text') # display in text format (musicxml protocol)
+sheet_music.sheet.show() # display in png format 
 
-sheet_music.sheet.write() # export the sheet music in MusicXML format
-sheet_music.sheet.write(fmt='musicxml.pdf') # export the sheet music in pdf
+#Eeport sheet music
+sheet_music.sheet.write() # export in MusicXML format
+sheet_music.sheet.write(fmt='musicxml.pdf') # export in pdf
 
 ```
 
