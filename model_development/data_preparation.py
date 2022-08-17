@@ -197,7 +197,7 @@ class data_preparation():
     
 
         
-    def create_audio_set(self, pad_before=0.02, pad_after=0.02, train=0.6, val=0.2, test=0.2, random_state=42, fix_length=None, batching=False, dir_path=None):
+    def create_audio_set(self, pad_before=0.02, pad_after=0.02, fix_length=None, batching=False, dir_path=''):
         """
         main function to create training/test/eval dataset from dataset
         
@@ -211,12 +211,10 @@ class data_preparation():
         if batching==True and dir_path==None:
             raise TypeError('please specify directory path for saving pickle files')
 
-        
+        self.batch_tracking=0
         tqdm.pandas()
         df_list=[]
-        
-        if train+val+test!=1: raise ValueError('the total of train, val, test should euqal to 100%') 
-        
+              
         def audio_slicing(x, wav, sr, pad_before, pad_after, window_size=None):
             max_len=len(wav)
             padding_b=librosa.time_to_samples(pad_before, sr=sr)
@@ -268,6 +266,10 @@ class data_preparation():
 
 
         print('Generating Dataset')
+        train=0.6
+        val=0.2
+        test=0.2
+
         for key, row in tqdm(self.midi_wav_map.iterrows(), total=self.midi_wav_map.shape[0]):
             if row['midi_filename']=='drummer1/session1/78_jazz-fast_290_beat_4-4.mid':
                 continue
@@ -286,31 +288,34 @@ class data_preparation():
             if batching==True:
                 if len(df_list)>(self.midi_wav_map.shape[0]/50):
                     create_df(df_list)
-                    self.notes_collection.to_pickle(os.path.join(dir_path, f"dataset_{self.batch_tracking}.pkl"))
-                    # self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
-                    #             [int(train*len(self.notes_collection)),
-                    #             int((train+val)*len(self.notes_collection))])
-                    # self.train.to_pickle(os.path.join(dir_path, f"train_{self.batch_tracking}.pkl"))
-                    # self.val.to_pickle(os.path.join(dir_path, f"val_{self.batch_tracking}.pkl"))
-                    # self.test.to_pickle(os.path.join(dir_path, f"test_{self.batch_tracking}.pkl"))
+                    self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=42),
+                                [int(train*len(self.notes_collection)),
+                                int((train+val)*len(self.notes_collection))])
+                    self.train.to_pickle(os.path.join(dir_path, f"train_{self.batch_tracking}.pkl"))
+                    self.val.to_pickle(os.path.join(dir_path, f"val_{self.batch_tracking}.pkl"))
+                    self.test.to_pickle(os.path.join(dir_path, f"test_{self.batch_tracking}.pkl"))
                     print(f'saved batch {self.batch_tracking} data at {dir_path}')
                     self.batch_tracking=self.batch_tracking+1
                     df_list=[]
                     self.notes_collection=pd.DataFrame()
-                    # del self.train
-                    # del self.val
-                    # del self.test
+                    del self.train
+                    del self.val
+                    del self.test
 
                 else:
                     pass
             else:
                 pass
         create_df(df_list)
-        self.notes_collection.to_pickle(os.path.join(dir_path, f"dataset_{self.batch_tracking}.pkl"))
         
-        # self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=random_state),
-        #                     [int(train*len(self.notes_collection)),
-        #                     int((train+val)*len(self.notes_collection))])
+        
+
+        if batching==True:
+            self.train, self.val, self.test = np.split(self.notes_collection.sample(frac=1, random_state=42),
+                                [int(train*len(self.notes_collection)),
+                                int((train+val)*len(self.notes_collection))])
+        else:
+            self.notes_collection.to_pickle(os.path.join(dir_path, f"dataset_{self.batch_tracking}.pkl"))
         
         print('Done!')
 
