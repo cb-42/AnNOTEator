@@ -79,8 +79,8 @@ class data_preparation():
         Each MidiMessage contains information like channel, note, velocity, time etc.
         This function extract each note presented in the midi track and the associated start and stop playing time of each note
         
-        :param midi_file (string): The midi file path
-        :return (list): a list of 3-element lists, each 3-element list consist of [note label, associated start time in the track, associated end time in the track]  
+        :param midi_file (str):     The midi file path
+        :return (list):             a list of 3-element lists, each 3-element list consist of [note label, associated start time in the track, associated end time in the track]  
         """
         
         # the time value stored in the MidiMessage is DELTATIME in ticks unit instead of exact time in second unit.
@@ -149,9 +149,10 @@ class data_preparation():
         """
         Merge the notes if they share the same start time, which means these notes were start playing at the same time.
         
-        :param track_id: the unique id of the midi_track
-        :param notes_collection: the list of 3-element lists, each 3-element list consist of
-                                                        [note label, associated start time in the track, associated end time in the track]
+        :param track_id (int):          the unique id of the midi_track
+        :param notes_collection (list): the list of 3-element lists, each 3-element list consist of
+                                        [note label, associated start time in the track, associated end time in the track]
+
         :return: Pandas DataFrame
         
         """
@@ -180,8 +181,9 @@ class data_preparation():
         A helper function to convert midi time value to seconds. The time value stored in the MidiMessages is in "ticks" unit, this need to be converted
         to "second" unit for audio slicing tasks
         
-        :param notes_collection: the list of 3-element lists, each 3-element list consist of
-                                                        [note label, associated start time in the track, associated end time in the track]
+        :param notes_collection (list):     the list of 3-element lists, each 3-element list consist of
+                                            [note label, associated start time in the track, associated end time in the track]
+    
         :return: a list of 3-element lists with start and end time rounded to 2 decimal places in seconds
         """
         if type(self.time_log)==float:
@@ -201,12 +203,15 @@ class data_preparation():
         """
         main function to create training/test/eval dataset from dataset
         
-        :param pad_before: padding (in seconds) add to the begining of the sliced audio. default 0.02 seconds
-        :param pad_after: padding (in seconds) add to the end of the sliced audio. default 0.02 seconds
-                         The padding actually increas the window length when doing the slicing instead of adding white space before and after.
-        :param train, val, test: the train/val/test ratio
-        :param random_state: random_state, default 42
-        :param fix_length: in seconds, setting this length  will force the sound clip to have exact same length in seconds. suggest value is 0.1~0.2
+        :param  pad_before (float):     padding (in seconds) add to the begining of the sliced audio. default 0.02 seconds
+        :param  pad_after (float):      padding (in seconds) add to the end of the sliced audio. default 0.02 seconds
+                                        The padding actually increas the window length when doing the slicing instead of adding white space before and after.
+        :param  fix_length (float):     in seconds, setting this length  will force the sound clip to have exact same length in seconds. suggest value is 0.1~0.2
+        :param  batching (bool):        apply batching to avoid memory issues. Suggest to turn this on if processing the full dataset. 
+                                        By default, it will divide the dataset into 50 batches and perform train test split automatically. .pkl file will be saved at specified location
+        :param  dir_path (str):         The path to the directory to store .pkl files
+
+        :return None
         """
         if batching==True and dir_path==None:
             raise TypeError('please specify directory path for saving pickle files')

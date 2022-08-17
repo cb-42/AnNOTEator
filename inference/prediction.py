@@ -6,9 +6,11 @@ import librosa
 def predict_drumhit(network,df, song_sampling_rate):
 
   '''
-  param network (file path):    Path to the trained keras network
-  param df (Pandas DataFrame):  The output dataframe from drum_to_frame function 
-  
+  :param network (file path):           Path to the trained keras network
+  :param df (Pandas DataFrame):         The output dataframe from drum_to_frame function 
+  :param song_sampling_rate (int):      The sampling rate of the song
+
+  :return result (Pandas DataFrame):    The dataframe with prediction labels
   '''
 
   model = keras.models.load_model(network)

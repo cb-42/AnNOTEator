@@ -61,9 +61,12 @@ gh repo clone cb-42/siads_697_capstone_annoteators
 #navigate to the root directory and install the necessary packages
 pip install -r requirements.txt
 
-#Below code will transcribe the audio from the youtube link below and output the pdf file in the root directory
+#Below code will transcribe the audio from the youtube link below and output the pdf file in the root directory, with the file name demo.pdf
 #Musescore 3 need to be installed for pdf export
-python main.py -i 'https://www.youtube.com/watch?v=hTWKbfoikeg' -o 'pdf'
+python main.py -l https://youtu.be/g-QKTLiQPPk -km performance -bpm 100 -on demo
+
+#For more info about the optional parameter
+python main.py -h
 
 ```
 
@@ -83,15 +86,16 @@ Below is a quick demo code of transcribing a song to drum sheet music. Please re
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
 from inference.prediction import predict_drumhit
 from inference.transcriber import drum_transcriber
-
-# If you want to use the audio from a Youtube video...
-path = get_yt_audio("Youtube link of your choice") 
+import librosa
 
 # Or specify the file path to the audio file in your compauter
 path = "the path to the audio file in your compauter"
 
+# If you want to use the audio from a Youtube video...
+path = get_yt_audio("Youtube link of your choice") 
+
 # Extract drum track from the Audio File / Youtube Audio
-drum_track, sample_rate = drum_extraction(path, kernel='demucs', mode='performance') 
+drum_track, sample_rate = drum_extraction(path, dir='inference/pretrained_models\demucs', kernel='demucs', mode='performance') 
 
 # Create dataframe for prediction task
 df, bpm = drum_to_frame(drum_track, sample_rate) 
@@ -101,7 +105,7 @@ prediction_df=predict_drumhit('inference/pretrained_models/annoteators/complete_
 
 #sheet music construction
 song_duration = librosa.get_duration(drum_track, sr=sample_rate)
-sheet_music = drum_transcriber(prediction_df, song_duration, bpm, sample_rate)
+sheet_music = drum_transcriber(prediction_df, song_duration, bpm, sample_rate, song_title='DEMO')
 
 # Display in notebook env
 sheet_music.sheet.show('text') # display in text format (musicxml protocol)

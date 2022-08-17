@@ -7,21 +7,35 @@ import copy
 class drum_transcriber():
     '''
     Create an object that store human readable sheet music file transcribed from the model output.   
-    :param prediction_df (pd.DataFrame): The dataframe that contains the predicted labels. Default output from the model
-    :param song_duration (float):   The duration of the song / drum_track in seconds  
-    :param sample_rate (int):       The sampling rate of the song / drum_track
-    :param beats_in_measure (int):  The UPPER NUMBER of the song's time signature . This number represent the number of beats in each measure. Default 4 
-    :param note_value (int):        The LOWER NUMBER of the song's time signature . This number represent the note value in a measure. Default 4
-    :param note_offset (int):       The offset value that control which onset is played on the first note of the first complete drum play measure.
-                                    This is a crucial parameter of calibrating the time grip with the onsets. offset=1 means the second onset is assume to be played on the first note of the first complete drumplay measure
+
+    :attr   onsets (pd.Series):             The list of onsets detected (in sample unit)
+    :attr   synced_8_div_clean (list):      The synced eighth division line for plotting use
+    :attr   synced_16_div_clean (list):     The synced 16th division line for plotting use
+    :attr   synced_32_div_clean (list):     The synced 32th division line for plotting use
+    :attr   synced_8_3_div_clean (list):    The synced eighth triplets division line for plotting use
+    :attr   synced_8_6_div_clean (list):    The synced eighth sixthlet division line for plotting use
+    :attr   music21_data (dict):            note data that in format friendly to music21 processing
+    :attr   sheet (Music21 object):         The object that contained the transcribed drum sheet music  
+
+    :param  prediction_df (pd.DataFrame):   The dataframe that contains the predicted labels. Default output from the model
+    :param  song_duration (float):          The duration of the song / drum_track in seconds
+    :param  bpm (float):                    The bpm of the song / drum_track  
+    :param  sample_rate (int):              The sampling rate of the song / drum_track
+    :param  beats_in_measure (int):         The UPPER NUMBER of the song's time signature . This number represent the number of beats in each measure. Default 4 
+    :param  note_value (int):               The LOWER NUMBER of the song's time signature . This number represent the note value in a measure. Default 4
+    :param  note_offset (int):              The offset value that control which onset is played on the first note of the first complete drum play measure.
+                                            This is a crucial parameter of calibrating the time grip with the onsets. offset=1 means the second onset is assume to be played on the first note of the first complete drumplay measure
+    :param  song_title (str):               The title of the song. This will be used as the title displayed in the drum sheet music as well as the filename of the output file
 
     :return drum_transcriber object
     
     Usage
     ----------
+
     drum_transcriber.sheet.show(fmt)
         fmt=None            Render the sheet music in png in the notebook enviornment. Musescore 3 software is required for notebook rendering
         fmt='text'          Display the sheet music in MusicXML format
+
     drum_transcriber.sheet.write(fmt, fp)
         fmt=None            Export he sheet music in MusicXML format
         fmt='musicxml.pdf'  Export he sheet music in pdf format
