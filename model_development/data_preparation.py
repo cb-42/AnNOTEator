@@ -1,4 +1,4 @@
-from augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
+from .augment_audio import add_pedalboard_effects, add_white_noise, apply_augmentations, augment_pitch
 import mido
 from mido import MidiFile, Message, MidiTrack, MetaMessage
 import librosa
