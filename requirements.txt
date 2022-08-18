@@ -12,3 +12,4 @@ sklearn
 spleeter==2.3.1
 tensorflow==2.5.0
 tqdm==4.64.0
+ipython
