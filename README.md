@@ -2,17 +2,17 @@
 Greetings! This is our Summer 2022 Capstone Project for the Master of Applied Data Science at the University of Michigan School of Information. Our goal is to predict drum notes from audio to create sheet music. The team consists of Christopher Brown, Stanley Hung, and Severus Chang.  
 
 # Introduction
-Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How this works](https://github.com/cb-42/siads_697_capstone_annoteators#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
+Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators' project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How does this work?](https://github.com/cb-42/siads_697_capstone_annoteators#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
 
 It is important to check out the [Known issues and limitations](https://github.com/cb-42/siads_697_capstone_annoteators#known-issues-and-limitations) sections for more information about factors to be aware of when using this package.
 
-To learn more about the technical details of this project, please visit our [blog post]. **Attach link later**
+To learn more about the technical details of this project, please visit our [blog post](https://medium.com/@stanley90526/b0fce4bb3200).
 
 # How does this work?
 
 <img src="img/Flow_diagram.jpg" alt="Annoteators Flow Diagram" width="740">
 
-For a more detailed explanation of each step, please visit our [blog post]. **Attach link later**
+For a more detailed explanation of each step, please visit our [blog post](https://medium.com/@stanley90526/b0fce4bb3200).
 
 # Preparing audio input
 The pipeline accepts either a local audio file (in various audio formats supported by ffmpeg) or a YouTube link to the music video of your choice. Please note that:
@@ -33,9 +33,6 @@ Our requirements.txt file has a list of the Python library dependencies needed t
 Note that 
 - if you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as `ffmpeg`, as noted [here](https://pypi.org/project/spleeter/).
 - if you wish to get the pdf output from the pipline, [Musescore software](https://musescore.org/en/download) is required to be installed beforehand.
-
-## Interactive Web App
-- tbd
 
 ## Docker image
 
@@ -64,7 +61,7 @@ python main.py -l https://youtu.be/g-QKTLiQPPk -km performance -bpm 100 -on demo
 python main.py -h
 ```
 
-## Notebook Environnment
+## Jupyter Notebook Environnment
 First download this repo or git clone this repo to your local computer.
 
 ```bash
@@ -89,7 +86,7 @@ path = "the path to the audio file on your computer"
 path = get_yt_audio("Youtube link of your choice") 
 
 # Extract drum track from the Audio File / Youtube Audio
-drum_track, sample_rate = drum_extraction(path, dir='inference/pretrained_models\demucs', kernel='demucs', mode='performance') 
+drum_track, sample_rate = drum_extraction(path, dir='inference/pretrained_models/demucs', kernel='demucs', mode='performance') 
 
 # Create dataframe for prediction task
 df, bpm = drum_to_frame(drum_track, sample_rate) 
@@ -121,7 +118,7 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 ## How were the data processed for model training? 
 <img src="img/data_preparation.jpg" alt="Data Processing Diagram" width="740">
 
-- Each drum track record in the dataset consist of 2 files: a MIDI file and a WAV audio file. The MIDI file and WAV file were synced to within 2ms time differences
+- Each drum track record in the dataset consists of 2 files: a MIDI file and a WAV audio file. The MIDI file and WAV file were synced to within 2ms time differences
 - The WAV audio was sliced into a series of mini audio clips with the relevant label captured from the MIDI messages. 
 - Each audio clip represents the sound of a single drum hit.
 - Please refer to the `data_preparation.py` script for more details. We also prepared a [notebook](https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/tutorials/data_preparation_demo.ipynb) to showcase how data preparation elements work and connect together.
@@ -129,32 +126,42 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 ## Data Augmentation
 Audio data augmentation can be applied to signals in the waveform or spectrogram domains, or both. We made several augmentation functions available in `augment_audio.py` and for convenience these are also wrapped into the data preparation pipeline. We primarily explored and tested audio augmentations in the waveform space, though the base model trained on unaugmented audio ultimately performed best. Thus, we do not currently recommend augmentation for model development in this workflow.  
   
-Augmentation can also be performed on the audio input used for inference. Depending on the kernel used for input signal preparation, we found that adding compression after processing resulted in better predictions. For more information, please see our [blog post]. **Attach link later**
+Augmentation can also be performed on the audio input used for inference. Depending on the kernel used for input signal preparation, we found that adding compression after processing resulted in better predictions. For more information, please see our [blog post](https://medium.com/@stanley90526/b0fce4bb3200).
 
 ## Model Architecture
-- Serv to add
+Using the Mel-Spectrogram feature representation, the network structure consists of: Input ⇒ 3 (Conv + MaxPooling) layers ⇒ 2 Fully connected layers + Dropout ⇒ Output Layer (Sigmoid Activation)
+
+<img src="img/melspec_model_arc.png" alt="Mel-spectrogram Model Architecture" width="740">
 
 ## Evaluation
-- Serv to add
+Overall test performance on the Mel-spectrogram base model is shown below:
+
+<img src="img/melspec_basemodel_overall_test_perf.png" alt="Mel-spectrogram Model Overall Test Performance" width="450">
 
 # Known issues and limitations
 - The model has poor performance in predicting multi-hit labels due to the lack of multi-hit labeled data in the training set. This could be fixed by modifying the data preparation algorithm.
-- The quantization and time mapping algorithm may not be 100% accurate all the time. This approach is also very sensitive to the 'exact time' of each hit in the track. A slight delay (which always happens in human performed drumplay) sometimes could make the note duration detection inaccurate. For example, a triplet note could be detected as a 16th note, due to a very little delay. A hidden markov chain model could be a solution to fix this problem - please visit our blog post for a deeper dive discussion on this.
+- The quantization and time mapping algorithm may not be 100% accurate all the time. This approach is also very sensitive to the 'exact time' of each hit in the track. A slight delay (which always happens in human performed drumplay) sometimes could make the note duration detection inaccurate. For example, a triplet note could be detected as a 16th note, due to a very little delay. A hidden markov chain model could be a solution to fix this problem. Please visit our [blog post](https://medium.com/@stanley90526/b0fce4bb3200) for a deeper discussion on this.
 - There is no standard style in writing drum sheet music. This project implemented a style of our choice, which may not suit everyone's styling preference. To change the notation style, it is necessary to modify the code in the transcriber script. This portion of the pipeline uses the `Music21` package for sheet music construction.
-- The standalone drum track demixed by `Demucs` is not an original drum track. Some audio features could be altered or lost entirely during the demixing process. It is a known issue that the `Demucs` processed drum track has a 'much cleaner signal' than the training drum track, which caused the prediction inaccuracy we observed. Please visit our blog post for a deeper dive and discussion about this, as well as the proposed methodology to fix this issue. 
+- The standalone drum track demixed by `Demucs` is not an original drum track. Some audio features could be altered or lost entirely during the demixing process. It is a known issue that the `Demucs` processed drum track has a 'much cleaner signal' than the training drum track, which caused the prediction inaccuracy we observed. Please visit our [blog post](https://medium.com/@stanley90526/b0fce4bb3200) for a deeper dive and discussion about this, as well as the proposed methodology to fix this issue. 
 
 # Future plans
-- tbd
+- Implement improvements to multi-hit label generation
+- Investigate demixing effects and apply similar treatment to training data
+- Evaluate Hidden Markov models for possible note duration mapping improvements
+- Further testing, evaluation, and implementation of audio augmentation parameters and effect combinations
+- Develop a real-world music evaluation dataset
+- Expand pipeline to handle other instrument components
     
 # Software References
-Our code uses the following open source packages and software:
+Our code uses the following notable open source packages and software:
 
 **Python packages:**
 - [Demucs](https://github.com/facebookresearch/demucs)
-- [Librosa](https://github.com/librosa/librosa)
+- [librosa](https://github.com/librosa/librosa)
 - [Mido](https://github.com/mido/mido/)
 - [Music21](https://github.com/cuthbertLab/music21)
 - [Pedalboard](https://github.com/spotify/pedalboard)
+- [pytube](https://github.com/pytube/pytube)
 - [Spleeter](https://github.com/deezer/spleeter)
 - [TensorFlow](https://github.com/tensorflow/tensorflow)    
     
