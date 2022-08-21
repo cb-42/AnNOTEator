@@ -113,7 +113,9 @@ We have uploaded various pre-trained models in the [pretrained_models folder](ht
 ## Source data  
 This project used The Expanded Groove MIDI Dataset (E-GMD) for model development. E-GMD Dataset is a large dataset of human drum performances, with audio recordings annotated in MIDI. E-GMD contains 444 hours of audio from 43 drum kits and is an order of magnitude larger than similar datasets. It is also the first human-performed drum transcription dataset with annotations of velocity.
 
-The E-GMD dataset was developed by a group of Google Researchers. For more information about the dataset, please visit their site: [The Expanded Groove MIDI Dataset](https://magenta.tensorflow.org/datasets/e-gmd).
+The dataset has a size of 131Gb which is too big to be sotre on Github, we have included a small sample of the dataset in the dataset folder. You can try to use the data_preparation script (or the data_preparation notebook) to process the provided dataset, so you can get a better understanding of the data structure. 
+
+The E-GMD dataset was developed by a group of Google Researchers. For more information about the dataset or access to the full dataset, please visit their site: [The Expanded Groove MIDI Dataset](https://magenta.tensorflow.org/datasets/e-gmd).
 
 ## How were the data processed for model training? 
 <img src="img/data_preparation.jpg" alt="Data Processing Diagram" width="740">
