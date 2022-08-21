@@ -2,9 +2,9 @@
 Greetings! This is our Summer 2022 Capstone Project for the Master of Applied Data Science at the University of Michigan School of Information. Our goal is to predict drum notes from audio to create sheet music. The team consists of Christopher Brown, Stanley Hung, and Severus Chang.  
 
 # Introduction
-Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators' project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How does this work?](https://github.com/cb-42/siads_697_capstone_annoteators#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
+Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators' project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How does this work?](https://github.com/cb-42/AnNOTEator#how-this-works) section. We may expand the scope of this project to cover more instrument components in the future.
 
-It is important to check out the [Known issues and limitations](https://github.com/cb-42/siads_697_capstone_annoteators#known-issues-and-limitations) sections for more information about factors to be aware of when using this package.
+It is important to check out the [Known issues and limitations](https://github.com/cb-42/AnNOTEator#known-issues-and-limitations) sections for more information about factors to be aware of when using this package.
 
 To learn more about the technical details of this project, please visit our [blog post](https://medium.com/@stanley90526/b0fce4bb3200).
 
@@ -71,7 +71,7 @@ gh repo clone cb-42/siads_697_capstone_annoteators
 pip install -r requirements.txt
 ```
 
-Below is quick demo code for transcribing a song to drum sheet music. Please refer to the `pipeline_demo` [notebook](https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/tutorials/pipeline_demo.ipynb) for more details about parameter selection.
+Below is quick demo code for transcribing a song to drum sheet music. Please refer to the `pipeline_demo` [notebook](https://github.com/cb-42/AnNOTEator/blob/main/tutorials/pipeline_demo.ipynb) for more details about parameter selection.
 
 ```python
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
@@ -108,7 +108,7 @@ sheet_music.sheet.write(fmt='musicxml.pdf') # export in pdf
 ```
 
 # Custom training and pre-trained models (for Data Scientists)
-We have uploaded various pre-trained models in the [pretrained_models folder](https://github.com/cb-42/siads_697_capstone_annoteators/tree/main/inference/pretrained_models/annoteators), differing primarily by augmentation strategy. The unaugmented base model is used for prediction by default. Each pre-trained model is a convolutional neural network (ConvNet) trained on the Expanded Groove MIDI Dataset (E-GMD) from the Google Magenta project. We also provide all the nessesary tooling for anyone that wishes to replicate or modify the training pipeline.  
+We have uploaded various pre-trained models in the [pretrained_models folder](https://github.com/cb-42/AnNOTEator/tree/main/inference/pretrained_models/annoteators), differing primarily by augmentation strategy. The unaugmented base model is used for prediction by default. Each pre-trained model is a convolutional neural network (ConvNet) trained on the Expanded Groove MIDI Dataset (E-GMD) from the Google Magenta project. We also provide all the nessesary tooling for anyone that wishes to replicate or modify the training pipeline.  
 
 ## Source data  
 This project used The Expanded Groove MIDI Dataset (E-GMD) for model development. E-GMD Dataset is a large dataset of human drum performances, with audio recordings annotated in MIDI. E-GMD contains 444 hours of audio from 43 drum kits and is an order of magnitude larger than similar datasets. It is also the first human-performed drum transcription dataset with annotations of velocity.
@@ -123,7 +123,7 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 - Each drum track record in the dataset consists of 2 files: a MIDI file and a WAV audio file. The MIDI file and WAV file were synced to within 2ms time differences
 - The WAV audio was sliced into a series of mini audio clips with the relevant label captured from the MIDI messages. 
 - Each audio clip represents the sound of a single drum hit.
-- Please refer to the `data_preparation.py` script for more details. We also prepared a [notebook](https://github.com/cb-42/siads_697_capstone_annoteators/blob/main/tutorials/data_preparation_demo.ipynb) to showcase how data preparation elements work and connect together.
+- Please refer to the `data_preparation.py` script for more details. We also prepared a [notebook](https://github.com/cb-42/AnNOTEator/blob/main/tutorials/data_preparation_demo.ipynb) to showcase how data preparation elements work and connect together.
 
 ## Data Augmentation
 Audio data augmentation can be applied to signals in the waveform or spectrogram domains, or both. We made several augmentation functions available in `augment_audio.py` and for convenience these are also wrapped into the data preparation pipeline. We primarily explored and tested audio augmentations in the waveform space, though the base model trained on unaugmented audio ultimately performed best. Thus, we do not currently recommend augmentation for model development in this workflow.  
