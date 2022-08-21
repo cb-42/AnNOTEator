@@ -103,17 +103,19 @@ def apply_augmentations(df, audio_col='audio_wav', aug_col_names=None, **aug_par
             }
         apply_augmentations(audio_df, col_names=aug_cols, **aug_params)
     """
+    aug_df = df.copy(deep=True)
+    
     for func, params in aug_param_dict.items():
         print('Applying {}'.format(func))
-        df[func] = df[audio_col].progress_apply(lambda x: eval(func)(x, **params))
+        aug_df[func] = aug_df[audio_col].progress_apply(lambda x: eval(func)(x, **params))
         
     if aug_col_names is not None:
         col_dict = {}
         for fun, col in zip(aug_param_dict.keys(), aug_col_names):
             col_dict[fun] = col
-        df.rename(columns=col_dict, inplace=True)
+        aug_df.rename(columns=col_dict, inplace=True)
         
-    return df
+    return aug_df
 
 
 def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_per_octave=12,
@@ -143,7 +145,7 @@ def augment_pitch(audio_clip, sample_rate=44100, n_steps=3, step_var=None, bins_
 
 
 def augment_spectrogram_spans(spec, spans=3, span_ranges=[[1,4], [1,6]], span_variation=1,
-                              ind_lists=None, sig_val=None):
+                              ind_lists=None, sig_val=None, overwrite=False):
     """
     Set spectrogram (or other 2-d numpy array) span(s) to background or another signal.
     
@@ -155,6 +157,7 @@ def augment_spectrogram_spans(spec, spans=3, span_ranges=[[1,4], [1,6]], span_va
         ind_lists: List of lists corresponding to array indices to augment; By default, a list will be
             created.
         sig_val: value to set sub arrays to; minimum (background) value is used by default.
+        overwrite: Boolean signifying whether to overwrite the input array.
     
     Returns:
         An augmented spectrogram (or other numpy array) with dropout spans applied.
@@ -163,6 +166,9 @@ def augment_spectrogram_spans(spec, spans=3, span_ranges=[[1,4], [1,6]], span_va
         audio_df['mel_spec_dropout'] = audio_df.mel_spec.progress_apply(lambda x: augment_spectrogram_spans(x.copy)))
     
     """
+    if overwrite==False:
+        spec = spec.copy()
+    
     if not sig_val:
         sig_val = spec.min() # use for setting to background
         
@@ -186,7 +192,7 @@ def augment_spectrogram_spans(spec, spans=3, span_ranges=[[1,4], [1,6]], span_va
     return spec
 
 
-def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, max_pts=None, alpha=0.5, fontsizes=[24, 18, 20], figsize=(16, 12), leg_loc='best'):
+def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, max_pts=None, alpha=0.5, fontsizes=[24, 18, 20], figsize=(16, 12), leg_loc='best', title=''):
     """
     Visually compare the effect of various augmentations on the same signal's amplitude envelope (or other signals 
         after resampling) using librosa.display.waveplot.
@@ -206,6 +212,7 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, m
         fontsizes: List of font sizes to use for plot title and/or other labels.
         figsize: Figure size tuple to pass to plt.figure, corresponding to titles, axis labels, and legend labels.
         leg_loc: String to pass to plt.legend to control legend positioning.
+        title: String to optionally specify the plot title.
         
     Example usage:
         compare_waveforms(df=sub_df, i=0, signal_cols=['wn_audio', 'audio_wav', 'augmented_pitch'],
@@ -228,7 +235,10 @@ def compare_waveforms(df, i, signal_cols, signal_labs=None, sample_rate=44100, m
     for col, lab, alp in list(zip(signal_cols, signal_labs, alpha)):
         librosa.display.waveplot(df.loc[i, col], sr=sample_rate, max_points=max_pts, label=lab, alpha=alp) 
     
-    plt.title('Comparison of audio clips for element: {}, label: {}'.format(i, df.loc[i, 'label']), fontsize=fontsizes[0])
+    if title == '':
+        plt.title('Comparison of audio clips for element: {}, label: {}'.format(i, df.loc[i, 'label']), fontsize=fontsizes[0])
+    else:
+        plt.title(title, fontsize=fontsizes[0])
     plt.gca().xaxis.label.set_size(fontsizes[1])
     plt.legend(signal_labs, loc=leg_loc, fontsize=fontsizes[2])    
 
