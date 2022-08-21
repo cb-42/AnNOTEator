@@ -74,6 +74,7 @@ pip install -r requirements.txt
 Below is quick demo code for transcribing a song to drum sheet music. Please refer to the `pipeline_demo` [notebook](https://github.com/cb-42/AnNOTEator/blob/main/tutorials/pipeline_demo.ipynb) for more details about parameter selection.
 
 ```python
+#These import statements assume you start the notebook in the repo root directory
 from inference.input_transform import drum_extraction, drum_to_frame, get_yt_audio
 from inference.prediction import predict_drumhit
 from inference.transcriber import drum_transcriber
