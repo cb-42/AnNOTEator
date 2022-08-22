@@ -4,7 +4,7 @@ Greetings! This is our Summer 2022 Capstone Project for the Master of Applied Da
 # Introduction
 Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play music. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators' project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How does this work?](https://github.com/cb-42/AnNOTEator#how-does-this-work) section. We may expand the scope of this project to cover more instrument components in the future.
 
-It is important to check out the [Known issues and limitations](https://github.com/cb-42/AnNOTEator#known-issues-and-limitations) sections for more information about factors to be aware of when using this package.
+It is important to check out the [Known issues and recommendations for future work](https://github.com/cb-42/AnNOTEator#known-issues-and-recommendations-for-futurework) sections for more information about factors to be aware of when using this package.
 
 To learn more about the technical details of this project, please visit our [blog post](https://medium.com/@stanley90526/b0fce4bb3200).
 
@@ -124,7 +124,7 @@ The E-GMD dataset was developed by a group of Google Researchers. For more infor
 - Each drum track record in the dataset consists of 2 files: a MIDI file and a WAV audio file. The MIDI file and WAV file were synced to within 2ms time differences
 - The WAV audio was sliced into a series of mini audio clips with the relevant label captured from the MIDI messages. 
 - Each audio clip represents the sound of a single drum hit.
-- Please refer to the `data_preparation.py` script for more details. We also prepared a [notebook](https://github.com/cb-42/AnNOTEator/blob/main/tutorials/data_preparation_demo.ipynb) to showcase how data preparation elements work and connect together.
+- Please refer to the `data_preparation.py` script for more details. We also prepared a [notebook](https://github.com/cb-42/AnNOTEator/blob/main/tutorials/Model_Development_0_Data_Preparation_Demo.ipynb) to showcase how data preparation elements work and connect together.
 
 ## Data Augmentation
 Audio data augmentation can be applied to signals in the waveform or spectrogram domains, or both. We made several augmentation functions available in `augment_audio.py` and for convenience these are also wrapped into the data preparation pipeline. We primarily explored and tested audio augmentations in the waveform space, though the base model trained on unaugmented audio ultimately performed best. Thus, we do not currently recommend augmentation for model development in this workflow.  
