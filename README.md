@@ -2,7 +2,7 @@
 Greetings! This is our Summer 2022 Capstone Project for the Master of Applied Data Science at the University of Michigan School of Information. Our goal is to predict drum notes from audio to create sheet music. The team consists of Christopher Brown, Stanley Hung, and Severus Chang.  
 
 # Introduction
-Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators' project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How does this work?](https://github.com/cb-42/AnNOTEator#how-does-this-work) section. We may expand the scope of this project to cover more instrument components in the future.
+Sheet music is a fundamental and important tool for most musicians. It makes individuals much faster and more efficient in preparing to play music. Nowadays, obtaining properly written sheet music of a song could be troublesome unless that song is particularly popular and in the worst case a musician needs to transcribe it themselves. The AnNOTEators' project aims to help with this situation by leveraging neural networks to automatically transcibe each instrument part in a song. Due to the 8 week time limit for this project, the team decided to focus on transcribing drum notes and produce drum sheet music from a given song, rather than handle all instrument layers. You can find more details of the pipeline and framework in the [How does this work?](https://github.com/cb-42/AnNOTEator#how-does-this-work) section. We may expand the scope of this project to cover more instrument components in the future.
 
 It is important to check out the [Known issues and limitations](https://github.com/cb-42/AnNOTEator#known-issues-and-limitations) sections for more information about factors to be aware of when using this package.
 
@@ -31,8 +31,8 @@ There are a few ways to install and use the code, models, and environments we've
 Our requirements.txt file has a list of the Python library dependencies needed to run our Python scripts and Jupyter notebooks. Due to differing version dependencies in the model training and audio inference portions of the workflow, two environments are recommended.
 
 Note that 
-- if you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as `ffmpeg`, as noted [here](https://pypi.org/project/spleeter/).
-- if you wish to get the pdf output from the pipline, [Musescore software](https://musescore.org/en/download) is required to be installed beforehand.
+- If you wish to use the Python `Spleeter` library for audio data preparation there are additional dependencies, such as `ffmpeg`, as noted [here](https://pypi.org/project/spleeter/).
+- If you wish to get the pdf output from the pipline, [MuseScore software](https://musescore.org/en/download) is required to be installed beforehand.
 
 ## Docker image
 
