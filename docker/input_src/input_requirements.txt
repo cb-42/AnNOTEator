@@ -1,7 +1,0 @@
-demucs
-ffmpeg
-librosa
-mido
-numpy
-pandas
-pytube

@@ -11,5 +11,3 @@ RUN ./MuseScore-3.6.2.548021370-x86_64.AppImage install --appimage-extract
 RUN rm ./MuseScore-3.6.2.548021370-x86_64.AppImage
 
 EXPOSE 8080
-
-ENTRYPOINT [ "python", "inference.py" ]

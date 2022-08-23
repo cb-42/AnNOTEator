@@ -38,10 +38,10 @@ Note that
 
 Docker images for the model training and the audio inference environments can be acquired from our [Docker Hub repository](https://hub.docker.com/r/cbrown42/annoteators_project). These come with necessary Python libraries and other software pre-installed, such as MuseScore which is necessary for notation. You may wish to check out [getting started with Docker](https://docs.docker.com/get-started/#prepare-your-docker-environment) to learn more about set up.
 
-For example, to pull the inference Docker image, use the following command:  
+For example, to pull the latest inference Docker image, use the following command:  
 
 ```bash
-docker pull cbrown42/annoteators_project:inference-0.02
+docker pull cbrown42/annoteators_project:inference-0.03
 ```
 
 ## Command Line Interface

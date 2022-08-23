@@ -1,13 +1,9 @@
-demucs
-ffmpeg
 librosa
 matplotlib
 mido
-music21
 numpy
 pandas
 pedalboard
-pytube
 sklearn
-tqdm
 tensorflow
+tqdm
